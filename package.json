@@ -1,0 +1,28 @@
+{
+  "name": "newleaf",
+  "version": "0.0.1",
+  "port": 3012,
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0"
+  },
+  "dependencies": {
+    "conventional-changelog-cli": "^2.1.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "koa": "^2.13.1",
+    "koa-body": "^4.2.0",
+    "koa-helmet": "^6.1.0",
+    "koa-logger": "^3.2.1",
+    "koa-respond": "^2.1.0",
+    "koa-router": "^10.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
