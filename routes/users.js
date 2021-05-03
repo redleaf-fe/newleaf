@@ -1,7 +1,9 @@
 const Router = require('koa-router');
 const router = new Router();
-const { hello } = require('../controllers/users');
 
-router.get('/', hello);
+router.get('/', (ctx) => {
+  const { user } = ctx.request.query;
+  ctx.ok({ user });
+});
 
 module.exports = router.routes();
