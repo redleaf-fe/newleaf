@@ -3,22 +3,45 @@ const Router = require('koa-router');
 const Logger = require('koa-logger');
 const BodyParser = require('koa-body');
 const Helmet = require('koa-helmet');
-const Respond = require('koa-respond');
+const nunjucks = require('nunjucks');
+const mysql = require('mysql2/promise');
 
+const config = require('./env.json');
 const pkg = require('./package.json');
 
-const app = new Koa();
-const router = new Router();
+async function main() {
+  const conn = await mysql.createConnection({
+    host: 'localhost',
+    user: config.user,
+    password: config.password
+  });
 
-app.use(Helmet());
-app.use(Logger());
-app.use(BodyParser());
-app.use(Respond());
+  const app = new Koa();
+  const router = new Router();
 
-// API routes
-require('./routes')(router);
-app.use(router.routes());
-app.use(router.allowedMethods());
+  nunjucks.configure('views');
 
-const port = pkg.port || 3000;
-app.listen(port);
+  // app.use(Helmet());
+  app.use(Logger());
+  app.use(BodyParser());
+
+  app.use((ctx, next) => {
+    ctx.conn = conn;
+    next();
+  });
+
+  require('./routes')(router);
+  router.register(['/'], ['GET', 'POST'], (ctx, next) => {
+    ctx.body = nunjucks.render('index.html');
+  });
+
+  app.use(router.routes());
+  app.use(router.allowedMethods());
+
+  const port = pkg.port || 3000;
+  app.listen(port);
+}
+
+main();
+
+
