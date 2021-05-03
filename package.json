@@ -5,6 +5,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
+    "dev": "node index.js",
     "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0"
   },
   "dependencies": {
@@ -14,8 +15,10 @@
     "koa-body": "^4.2.0",
     "koa-helmet": "^6.1.0",
     "koa-logger": "^3.2.1",
-    "koa-respond": "^2.1.0",
-    "koa-router": "^10.0.0"
+    "koa-router": "^10.0.0",
+    "mysql2": "^2.2.5",
+    "nunjucks": "^3.2.3",
+    "sequelize": "^6.6.2"
   },
   "devDependencies": {
     "prettier": "^2.2.1"
