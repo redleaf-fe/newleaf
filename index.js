@@ -8,6 +8,7 @@ const { Sequelize } = require('sequelize');
 
 const config = require('./env.json');
 const pkg = require('./package.json');
+const { Database } = require('./services');
 
 async function main() {
   const conn = new Sequelize({
@@ -19,8 +20,8 @@ async function main() {
     // database: config.database,
     ...config,
     define: {
-      freezeTableName: true
-    }
+      freezeTableName: true,
+    },
   });
 
   try {
@@ -28,6 +29,13 @@ async function main() {
     console.log('数据库连接成功');
   } catch (error) {
     console.error('数据库连接失败：', error);
+  }
+
+  try {
+    await Database.initDatabase(conn);
+    console.log('数据库初始化成功');
+  } catch (error) {
+    console.error('数据库初始化失败：', error);
   }
 
   const app = new Koa();
