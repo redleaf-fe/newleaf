@@ -1,18 +1,14 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (ctx) => {
-  return ctx.conn.define(
+module.exports = (conn) => {
+  return conn.define(
     'user',
     {
       name: DataTypes.STRING(20),
-      // 外部导入ID
-      uid: DataTypes.STRING(20),
-      // 内部用ID
-      id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
+      // 用户Id
+      uid: { type: DataTypes.STRING(20), primaryKey: true },
+      // 用户所属的应用Id列表
+      appList: DataTypes.STRING,
     },
     {
       createdAt: false,
