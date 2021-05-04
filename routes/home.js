@@ -9,7 +9,7 @@ router.get('/', (ctx) => {
   if (fs.existsSync(configPath)) {
     ctx.redirect('/#/dashboard');
   } else {
-    ctx.redirect('/#/firstIn');
+    ctx.redirect('/#/config');
   }
 });
 
