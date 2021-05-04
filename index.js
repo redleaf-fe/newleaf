@@ -2,19 +2,33 @@ const Koa = require('koa');
 const Router = require('koa-router');
 const Logger = require('koa-logger');
 const BodyParser = require('koa-body');
-const Helmet = require('koa-helmet');
+// const Helmet = require('koa-helmet');
 const nunjucks = require('nunjucks');
-const mysql = require('mysql2/promise');
+const { Sequelize } = require('sequelize');
 
 const config = require('./env.json');
 const pkg = require('./package.json');
 
 async function main() {
-  const conn = await mysql.createConnection({
+  const conn = new Sequelize({
     host: 'localhost',
-    user: config.user,
-    password: config.password
+    dialect: 'mysql',
+    // username: config.username,
+    // password: config.password,
+    // port: config.port,
+    // database: config.database,
+    ...config,
+    define: {
+      freezeTableName: true
+    }
   });
+
+  try {
+    await conn.authenticate();
+    console.log('数据库连接成功');
+  } catch (error) {
+    console.error('数据库连接失败：', error);
+  }
 
   const app = new Koa();
   const router = new Router();
@@ -43,5 +57,3 @@ async function main() {
 }
 
 main();
-
-
