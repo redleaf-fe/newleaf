@@ -39,13 +39,13 @@ async function main() {
   app.use(Logger());
   app.use(BodyParser());
 
-  app.use((ctx, next) => {
+  app.use(async (ctx, next) => {
     ctx.conn = conn;
-    next();
+    await next();
   });
 
   require('./routes')(router);
-  router.register(['/'], ['GET', 'POST'], (ctx, next) => {
+  router.register(['/'], ['GET', 'POST'], (ctx) => {
     ctx.body = nunjucks.render('index.html');
   });
 
