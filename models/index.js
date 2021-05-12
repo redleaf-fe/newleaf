@@ -1,7 +1,7 @@
-module.exports = (ctx) => {
+module.exports = (conn) => {
   return {
-    users: require('./users')(ctx),
-    appList: require('./appList')(ctx),
-    publishList: require('./publishList')(ctx),
+    users: require('./users')(conn),
+    appList: require('./appList')(conn),
+    publishList: require('./publishList')(conn),
   };
 };
