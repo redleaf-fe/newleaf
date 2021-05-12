@@ -9,16 +9,16 @@ const { Sequelize } = require('sequelize');
 const config = require('./env.json');
 const pkg = require('./package.json');
 const { Database } = require('./services');
+const { Login } = require('./middlewares');
 
 async function main() {
   const conn = new Sequelize({
     host: 'localhost',
     dialect: 'mysql',
-    // username: config.username,
-    // password: config.password,
-    // port: config.port,
-    // database: config.database,
-    ...config,
+    username: config.username,
+    password: config.password,
+    port: config.port,
+    database: config.database,
     define: {
       freezeTableName: true,
     },
@@ -47,10 +47,14 @@ async function main() {
   app.use(Logger());
   app.use(BodyParser());
 
+  // 数据库
   app.use(async (ctx, next) => {
     ctx.conn = conn;
     await next();
   });
+
+  // 登录和权限
+  app.use(Login);
 
   require('./routes')(router);
   router.register(['/'], ['GET', 'POST'], (ctx) => {
