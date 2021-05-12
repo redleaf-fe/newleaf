@@ -44,6 +44,12 @@ async function main() {
   nunjucks.configure('views');
 
   // app.use(Helmet());
+  // 跨域配置
+  app.use(async (ctx, next) => {
+    ctx.set('Access-Control-Allow-Origin', 'http://localhost:3020');
+    ctx.set('Access-Control-Allow-Headers', 'content-type');
+    await next();
+  });
   app.use(Logger());
   app.use(BodyParser());
 
