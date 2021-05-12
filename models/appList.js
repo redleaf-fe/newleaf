@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (ctx) => {
-  return ctx.conn.define('appList', {
+module.exports = (conn) => {
+  return conn.define('appList', {
     name: DataTypes.STRING(20),
     // 应用唯一Id
     uid: {
