@@ -10,7 +10,7 @@ const KeyGrip = require('keygrip');
 const config = require('./env.json');
 const pkg = require('./package.json');
 const { Database } = require('./services');
-const { Login } = require('./middlewares');
+const { LoginMiddleware } = require('./middlewares');
 
 async function main() {
   const conn = new Sequelize({
@@ -42,6 +42,8 @@ async function main() {
   const app = new Koa();
   const router = new Router();
 
+  app.context.conn = conn;
+
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
 
   nunjucks.configure('views');
@@ -56,14 +58,8 @@ async function main() {
   app.use(Logger());
   app.use(BodyParser());
 
-  // 数据库
-  app.use(async (ctx, next) => {
-    ctx.conn = conn;
-    await next();
-  });
-
   // 登录和权限
-  app.use(Login);
+  app.use(LoginMiddleware);
 
   require('./routes')(router);
   router.register(['/'], ['GET', 'POST'], (ctx) => {
