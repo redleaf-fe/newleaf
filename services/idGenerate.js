@@ -2,12 +2,18 @@ const { nanoid } = require('nanoid');
 
 module.exports = {
   async idGenerate({ conn, modelName }) {
-    const res = await conn.models[modelName].findAll({
-      where: { uid: 1 },
+    let uid = nanoid(20);
+    let res = await conn.models[modelName].findAll({
+      where: { uid },
     });
 
-    console.log(res, 'id')
+    while (res.length > 0) {
+      uid = nanoid(20);
+      res = await conn.models[modelName].findAll({
+        where: { uid },
+      });
+    }
 
-    return 1
+    return uid;
   },
 };
