@@ -5,6 +5,7 @@ const BodyParser = require('koa-body');
 // const Helmet = require('koa-helmet');
 const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
+const KeyGrip = require('keygrip');
 
 const config = require('./env.json');
 const pkg = require('./package.json');
@@ -40,6 +41,8 @@ async function main() {
 
   const app = new Koa();
   const router = new Router();
+
+  app.keys = new KeyGrip(config.keys.split(','), 'sha256');
 
   nunjucks.configure('views');
 
