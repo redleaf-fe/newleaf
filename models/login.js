@@ -14,7 +14,7 @@ module.exports = (conn) => {
       loginToken: DataTypes.STRING(20),
     },
     {
-      // createdAt: false,
+      createdAt: false,
       // updatedAt: false,
     },
   );

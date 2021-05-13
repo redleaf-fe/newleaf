@@ -15,7 +15,7 @@ module.exports = (conn) => {
     updateId: DataTypes.STRING(20),
     },
     {
-      // createdAt: false,
+      createdAt: false,
       // updatedAt: false,
     },
   );

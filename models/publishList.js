@@ -14,8 +14,8 @@ module.exports = (conn) => {
       },
     },
     {
-      // createdAt: false,
-      updatedAt: false,
+      createdAt: false,
+      // updatedAt: false,
     },
   );
 };
