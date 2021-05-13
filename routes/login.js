@@ -7,6 +7,12 @@ const { validate } = require('../utils');
 
 const router = new Router();
 
+const cookieConfig = {
+  signed: true,
+  maxAge: 24 * 3600 * 1000,
+  httpOnly: true,
+};
+
 const schema = new Schema({
   userName: {
     type: String,
@@ -40,9 +46,33 @@ router.post('/login', async (ctx) => {
     where: { name: userName },
   });
 
-  console.log(res);
+  if (res.length > 0) {
+    // 校验密码
+    if (res[0].password === encrypt) {
+      const token = await IdGenerate.idGenerate({
+        conn: ctx.conn,
+        modelName: 'login',
+      });
 
-  ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+      // 生成登录token
+      await ctx.conn.models.login.create({
+        uid: res[0].uid,
+        loginToken: token,
+      });
+
+      ctx.cookies.set('token', token, cookieConfig);
+      ctx.cookies.set('userName', res[0].name, cookieConfig);
+
+      ctx.status = 302;
+      ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+    } else {
+      ctx.status = 400;
+      ctx.body = JSON.stringify({ message: '用户名或密码错误' });
+    }
+  } else {
+    ctx.status = 400;
+    ctx.body = JSON.stringify({ message: '用户未注册' });
+  }
 });
 
 router.post('/register', async (ctx) => {
@@ -78,6 +108,21 @@ router.post('/register', async (ctx) => {
     uid,
   });
 
+  const token = await IdGenerate.idGenerate({
+    conn: ctx.conn,
+    modelName: 'login',
+  });
+
+  // 生成登录token
+  await ctx.conn.models.login.create({
+    uid,
+    loginToken: token,
+  });
+
+  ctx.cookies.set('token', token, cookieConfig);
+  ctx.cookies.set('userName', userName, cookieConfig);
+
+  ctx.status = 302;
   ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
 });
 
