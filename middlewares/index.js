@@ -1,3 +1,3 @@
 module.exports = {
-  Login: require('./login'),
+  LoginMiddleware: require('./login'),
 };

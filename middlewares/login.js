@@ -1,15 +1,28 @@
-const Cookie = require('cookie');
-
 module.exports = async (ctx, next) => {
-  // const cookie = Cookie.parse(ctx.req.headers.cookie);
-  
-  // console.log(Object.keys(ctx.req.headers));
+  const whiteList = ['/'];
+  if (whiteList.includes(ctx.path)) {
+    await next();
+    return;
+  }
 
-  // ctx.conn.login.
-  // if(cookie.name !== 'root'){
-  //   ctx.redirect('/#/login')
-  //   return;
-  // }
+  const token = ctx.cookies.get('token');
 
-  await next();
+  if (!token) {
+    gotoLogin();
+  } else {
+    const res = await ctx.conn.models.login.findAll({
+      attributes: ['uid'],
+      where: { loginToken: token },
+    });
+    if (res.length > 0) {
+      await next();
+    } else {
+      gotoLogin();
+    }
+  }
+
+  function gotoLogin() {
+    ctx.status = 302;
+    ctx.body = JSON.stringify({ redirectUrl: '/login' });
+  }
 };
