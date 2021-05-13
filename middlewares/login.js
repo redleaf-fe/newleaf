@@ -15,6 +15,8 @@ module.exports = async (ctx, next) => {
       where: { loginToken: token },
     });
     if (res.length > 0) {
+      // 方便后面的逻辑获取用户id
+      ctx.uid = res[0].uid;
       await next();
     } else {
       gotoLogin();
