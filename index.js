@@ -16,10 +16,10 @@ async function main() {
   const conn = new Sequelize({
     host: 'localhost',
     dialect: 'mysql',
-    username: config.username,
-    password: config.password,
-    port: config.port,
-    database: config.database,
+    username: config.databaseUserName,
+    password: config.databasePassword,
+    port: config.databasePort,
+    database: config.databaseName,
     define: {
       freezeTableName: true,
     },
@@ -33,7 +33,7 @@ async function main() {
   }
 
   try {
-    await Database.initDatabase(conn);
+    await Database.initDatabase(ctx);
     console.log('数据库初始化成功');
   } catch (error) {
     console.error('数据库初始化失败：', error);
