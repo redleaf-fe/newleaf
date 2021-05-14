@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "node index.js",
-    "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0"
+    "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0",
+    "pretty": "prettier --write middlewares/* models/* routes/* services/* utils/*"
   },
   "dependencies": {
     "conventional-changelog-cli": "^2.1.1",
