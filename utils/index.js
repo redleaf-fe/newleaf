@@ -6,6 +6,7 @@ module.exports = {
       })
       .catch((err) => [err]);
   },
+  // 参数校验
   validate({ ctx, schema, obj }) {
     const errors = schema.validate(obj);
     if (errors.length > 0) {
@@ -14,5 +15,5 @@ module.exports = {
       return false;
     }
     return true;
-  },
+  }
 };

@@ -5,17 +5,17 @@ module.exports = {
     let uid = nanoid(20);
     let res = await conn.models[modelName].findAll({
       attributes: ['uid'],
-      where: { uid },
+      where: { uid }
     });
 
     while (res.length > 0) {
       uid = nanoid(20);
       res = await conn.models[modelName].findAll({
         attributes: ['uid'],
-        where: { uid },
+        where: { uid }
       });
     }
 
     return uid;
-  },
+  }
 };

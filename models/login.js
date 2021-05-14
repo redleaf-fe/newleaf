@@ -8,14 +8,14 @@ module.exports = (conn) => {
       // 用户Id
       uid: {
         type: DataTypes.STRING(20),
-        primaryKey: true,
+        primaryKey: true
       },
       // session
-      loginToken: DataTypes.STRING(20),
+      loginToken: DataTypes.STRING(20)
     },
     {
-      createdAt: false,
+      createdAt: false
       // updatedAt: false,
-    },
+    }
   );
 };

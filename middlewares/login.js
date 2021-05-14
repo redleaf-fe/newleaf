@@ -12,7 +12,7 @@ module.exports = async (ctx, next) => {
   } else {
     const res = await ctx.conn.models.login.findAll({
       attributes: ['uid'],
-      where: { loginToken: token },
+      where: { loginToken: token }
     });
     if (res.length > 0) {
       // 方便后面的逻辑获取用户id
