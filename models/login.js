@@ -8,13 +8,13 @@ module.exports = (conn) => {
       // 用户Id
       uid: {
         type: DataTypes.STRING(20),
-        primaryKey: true
+        primaryKey: true,
       },
       // session
-      loginToken: DataTypes.STRING(20)
+      loginToken: { type: DataTypes.STRING(20), allowNull: false },
     },
     {
-      createdAt: false
+      createdAt: false,
       // updatedAt: false,
     }
   );
