@@ -1,7 +1,25 @@
 const Router = require('koa-router');
+const Schema = require('validate');
+
 const { idGenerate, createUniq } = require('../services');
+const { validate } = require('../utils');
 
 const router = new Router();
+
+// 应用名和git地址只支持英文
+const schema = new Schema({
+  appName: {
+    type: String,
+    required: true,
+    length: { max: 20 },
+    match: /^[a-zA-Z0-9-]+$/,
+    message: {
+      required: '应用名称必填',
+      length: '应用名称不大于20字符',
+      match: '应用名称只支持数字、英文、和-',
+    },
+  }
+});
 
 router.get('/list', async (ctx) => {
   // todo: 搜索条件
@@ -10,11 +28,35 @@ router.get('/list', async (ctx) => {
     attributes: ['appList'],
     where: { uid: ctx.uid },
   });
-  ctx.body = JSON.stringify(res);
+
+  if (res.length > 0) {
+    const arr = [];
+    // 查找appList表获取详情
+    res[0].appList.split(',').forEach((v) => {
+      if (v) {
+        arr.push(
+          ctx.conn.models.appList.findAll({
+            attributes: ['appName', 'git', 'updatedAt'],
+            where: { id: v },
+          })
+        );
+      }
+    });
+    ctx.set('Content-Type', 'application/json');
+    ctx.body = await Promise.all(arr).then((result) => {
+      return result.map((v) => v[0]);
+});
+  } else {
+    ctx.body = JSON.stringify({ message: '未找到用户' });
+  }
 });
 
-router.get('/save', async (ctx) => {
+router.post('/save', async (ctx) => {
   const { appName, git, desc, id } = ctx.request.body;
+
+  if (!validate({ ctx, schema, obj: { appName, git } })) {
+    return;
+  }
 
   // 编辑
   if (id) {
@@ -46,6 +88,7 @@ router.get('/save', async (ctx) => {
     const appId = await idGenerate({
       ctx,
       modelName: 'appList',
+      idName: 'id',
     });
 
     if (
@@ -65,6 +108,19 @@ router.get('/save', async (ctx) => {
         },
       })
     ) {
+      // 在用户表的appList字段中添加新创建的应用
+      const res = await ctx.conn.models.user.findAll({
+        attributes: ['appList'],
+        where: { uid: ctx.uid },
+      });
+      await ctx.conn.models.user.update(
+        {
+          appList: `${res[0].appList},${appId}`,
+        },
+        {
+          where: { uid: ctx.uid },
+        }
+      );
       ctx.body = JSON.stringify({ message: '创建成功' });
     }
   }
