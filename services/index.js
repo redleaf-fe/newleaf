@@ -1,5 +1,5 @@
 module.exports = {
   Database: require('./database'),
-  IdGenerate: require('./idGenerate'),
-  CreateUniq: require('./createUniq')
+  idGenerate: require('./idGenerate'),
+  createUniq: require('./createUniq'),
 };
