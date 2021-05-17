@@ -4,14 +4,18 @@ module.exports = (conn) => {
   return conn.define(
     'publishList',
     {
-      branch: DataTypes.STRING(200),
-      commitId: DataTypes.STRING(200),
+      branch: { type: DataTypes.STRING(200), allowNull: false },
+      desc: DataTypes.STRING(100),
+      commitId: { type: DataTypes.STRING(200), allowNull: false },
       // 发布Id，用时间戳表示
-      uid: {
+      id: {
         type: DataTypes.DATE,
         primaryKey: true,
-        defaultValue: Sequelize.NOW
-      }
+        defaultValue: Sequelize.NOW,
+      },
+      // 创建人、编辑人 uid
+      creator: { type: DataTypes.STRING(20), allowNull: false },
+      updater: { type: DataTypes.STRING(20), allowNull: false },
     },
     {
       // createdAt: false,
