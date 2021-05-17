@@ -33,7 +33,7 @@ async function main() {
   }
 
   try {
-    await Database.initDatabase(ctx);
+    await Database.initDatabase(conn);
     console.log('数据库初始化成功');
   } catch (error) {
     console.error('数据库初始化失败：', error);
