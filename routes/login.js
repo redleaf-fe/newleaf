@@ -46,6 +46,7 @@ async function setCookie({ ctx, uid, userName }) {
   const token = await idGenerate({
     ctx,
     modelName: 'login',
+    idName: 'uid'
   });
 
   if (res.length > 0) {
@@ -113,6 +114,7 @@ router.post('/register', async (ctx) => {
   const uid = await idGenerate({
     ctx,
     modelName: 'user',
+    idName: 'uid'
   });
 
   if (
