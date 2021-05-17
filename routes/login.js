@@ -2,16 +2,16 @@ const Router = require('koa-router');
 const crypto = require('crypto');
 const Schema = require('validate');
 
-const { salt } = require('../env.json');
-const { IdGenerate } = require('../services');
-const { validate, createUniq } = require('../utils');
+const { salt, sessionValidTime } = require('../env.json');
+const { idGenerate, createUniq } = require('../services');
+const { validate } = require('../utils');
 
 const router = new Router();
 
 const cookieConfig = {
   signed: true,
-  maxAge: 24 * 3600 * 1000,
-  httpOnly: true
+  maxAge: sessionValidTime,
+  httpOnly: true,
 };
 
 const schema = new Schema({
@@ -21,8 +21,8 @@ const schema = new Schema({
     length: { min: 4, max: 20 },
     message: {
       required: '用户名必填',
-      length: '用户名需要4到20字符之间'
-    }
+      length: '用户名需要4到20字符之间',
+    },
   },
   password: {
     type: String,
@@ -30,33 +30,40 @@ const schema = new Schema({
     length: { min: 8, max: 32 },
     message: {
       required: '密码必填',
-      length: '密码需要8到32字符之间'
-    }
-  }
+      length: '密码需要8到32字符之间',
+    },
+  },
 });
 
 async function setCookie({ ctx, uid, userName }) {
   // 判断是否已经登录过
   const res = await ctx.conn.models.login.findAll({
     attributes: ['uid'],
-    where: { uid }
+    where: { uid },
   });
 
   // 生成登录token
-  const token = await IdGenerate.idGenerate({
-    conn: ctx.conn,
-    modelName: 'login'
+  const token = await idGenerate({
+    ctx,
+    modelName: 'login',
   });
 
   if (res.length > 0) {
-    await ctx.conn.models.login.update({
-      uid,
-      loginToken: token
-    });
+    // 更新token
+    await ctx.conn.models.login.update(
+      {
+        loginToken: token,
+      },
+      {
+        where: {
+          uid,
+        },
+      }
+    );
   } else {
     await ctx.conn.models.login.create({
       uid,
-      loginToken: token
+      loginToken: token,
     });
   }
 
@@ -74,13 +81,13 @@ router.post('/login', async (ctx) => {
   const encrypt = sha256.update(password + salt).digest('base64');
   const res = await ctx.conn.models.user.findAll({
     attributes: ['password', 'uid', 'userName'],
-    where: { userName }
+    where: { userName },
   });
 
   if (res.length > 0) {
     // 校验密码
     if (res[0].password === encrypt) {
-      setCookie({ ctx, uid: res[0].uid, userName: res[0].userName });
+      await setCookie({ ctx, uid: res[0].uid, userName: res[0].userName });
 
       ctx.status = 302;
       ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
@@ -103,29 +110,31 @@ router.post('/register', async (ctx) => {
   const sha256 = crypto.createHash('sha256');
   const encrypt = sha256.update(password + salt).digest('base64');
 
-  const uid = await IdGenerate.idGenerate({
-    conn: ctx.conn,
-    modelName: 'user'
-  });
-
-  await createUniq({
+  const uid = await idGenerate({
     ctx,
     modelName: 'user',
-    queryKey: ['userName'],
-    queryObj: { userName },
-    repeatMsg: '用户名已被使用',
-    createObj: {
-      userName,
-      password: encrypt,
-      appList: '',
-      uid
-    }
   });
 
-  setCookie({ ctx, uid, userName });
+  if (
+    await createUniq({
+      ctx,
+      modelName: 'user',
+      queryKey: ['userName'],
+      queryObj: { userName },
+      repeatMsg: '用户名已被使用',
+      createObj: {
+        userName,
+        password: encrypt,
+        appList: '',
+        uid,
+      },
+    })
+  ) {
+    await setCookie({ ctx, uid, userName });
 
-  ctx.status = 302;
-  ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+    ctx.status = 302;
+    ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+  }
 });
 
 module.exports = router.routes();
