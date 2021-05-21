@@ -6,12 +6,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "node index.js",
+    "docs:dev": "docsify serve docs",
     "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0",
     "pretty": "prettier --write middlewares/* models/* routes/* services/* utils/*"
   },
   "dependencies": {
-    "conventional-changelog-cli": "^2.1.1",
-    "cz-conventional-changelog": "^3.3.0",
     "koa": "^2.13.1",
     "koa-body": "^4.2.0",
     "koa-helmet": "^6.1.0",
@@ -24,6 +23,9 @@
     "validate": "^5.1.0"
   },
   "devDependencies": {
+    "conventional-changelog-cli": "^2.1.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "docsify": "^4.12.1",
     "prettier": "^2.2.1"
   },
   "config": {
