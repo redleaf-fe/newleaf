@@ -8,13 +8,12 @@ const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
 
 const config = require('./env.json');
-const pkg = require('./package.json');
 const { Database } = require('./services');
 const { LoginMiddleware } = require('./middlewares');
 
 async function main() {
   const conn = new Sequelize({
-    host: 'localhost',
+    host: config.databaseHost,
     dialect: 'mysql',
     username: config.databaseUserName,
     password: config.databasePassword,
@@ -55,7 +54,11 @@ async function main() {
     ctx.set('Access-Control-Allow-Headers', 'content-type');
     await next();
   });
-  app.use(Logger());
+
+  if(config.dev){
+    app.use(Logger());
+  }
+  
   app.use(BodyParser());
 
   // 登录和权限
@@ -69,7 +72,7 @@ async function main() {
   app.use(router.routes());
   app.use(router.allowedMethods());
 
-  const port = pkg.port || 3000;
+  const port = config.serverPort || 3000;
   app.listen(port);
 }
 
