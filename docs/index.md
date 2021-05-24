@@ -22,6 +22,11 @@ newleaf 使用 sequelize 进行数据库操作，默认使用 mysql 数据库，
 
 ```
 {
+  // 中心服务监听端口
+  "serverPort": 3012,
+  // 开发环境，会输出一些日志，实际使用时应该设置为false
+  "dev": true,
+
   // 中心服务对应的数据库配置
   // 数据库host，一般是localhost
   "databaseHost": "localhost",
