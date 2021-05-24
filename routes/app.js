@@ -18,6 +18,19 @@ const schema = new Schema({
       length: '应用名称不大于20字符',
       match: '应用名称只支持数字、英文、和-',
     },
+  },
+});
+
+router.get('/ids', async (ctx) => {
+  const res = await ctx.conn.models.user.findAll({
+    attributes: ['appList'],
+    where: { uid: ctx.uid },
+  });
+
+  if (res.length > 0) {
+    ctx.body = JSON.stringify(res[0].appList.split(','));
+  } else {
+    ctx.body = JSON.stringify({ message: '未找到用户' });
   }
 });
 
@@ -42,10 +55,9 @@ router.get('/list', async (ctx) => {
         );
       }
     });
-    ctx.set('Content-Type', 'application/json');
     ctx.body = await Promise.all(arr).then((result) => {
       return result.map((v) => v[0]);
-});
+    });
   } else {
     ctx.body = JSON.stringify({ message: '未找到用户' });
   }
@@ -77,7 +89,7 @@ router.post('/save', async (ctx) => {
           where: { id },
         }
       );
-      
+
       ctx.body = JSON.stringify({ message: '保存成功' });
     } else {
       ctx.status = 400;
@@ -115,7 +127,8 @@ router.post('/save', async (ctx) => {
       });
       await ctx.conn.models.user.update(
         {
-          appList: `${res[0].appList},${appId}`,
+          // appList为空，不进行拼接
+          appList: res[0].appList ? `${res[0].appList},${appId}` : appId,
         },
         {
           where: { uid: ctx.uid },
