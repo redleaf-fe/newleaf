@@ -15,6 +15,12 @@ const schema = new Schema({
       required: '参数中缺少应用名称',
     },
   },
+  currentPage: {
+    type: String,
+  },
+  datetime: {
+    type: String,
+  },
 });
 
 router.get('/get', async (ctx) => {
@@ -34,15 +40,10 @@ router.get('/get', async (ctx) => {
       url: config.logSeverPath,
       method: 'get',
       headers: { 'Content-Type': 'application/json' },
-      params: { appId: res[0].id },
+      params: { appId: res[0].id, ...query },
     });
-    const { errCode } = res2.data || {};
-    if (errCode) {
-      ctx.body = JSON.stringify([]);
-    } else {
-      console.log(res2.data);
-      ctx.body = res2.data;
-    }
+
+    ctx.body = res2.data;
   } else {
     ctx.body = JSON.stringify({ message: '未找到应用' });
   }
