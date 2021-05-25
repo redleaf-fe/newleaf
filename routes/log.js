@@ -7,23 +7,44 @@ const { validate } = require('../utils');
 
 const router = new Router();
 
+const schema = new Schema({
+  appName: {
+    type: String,
+    required: true,
+    message: {
+      required: '参数中缺少应用名称',
+    },
+  },
+});
+
 router.get('/get', async (ctx) => {
   const { query } = ctx.request;
 
-  const res = await axios({
-    url: config.logSeverPath,
-    method: 'get',
-    headers: { 'Content-Type': 'application/json' },
-    params: query || {},
+  if (!validate({ ctx, schema, obj: query })) {
+    return;
+  }
+
+  const res = await ctx.conn.models.appList.findAll({
+    attributes: ['id'],
+    where: { appName: query.appName },
   });
 
-  const { errCode } = res.data || {};
-
-  if (errCode) {
-    ctx.body = JSON.stringify([]);
+  if (res[0]) {
+    const res2 = await axios({
+      url: config.logSeverPath,
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' },
+      params: { appId: res[0].id },
+    });
+    const { errCode } = res2.data || {};
+    if (errCode) {
+      ctx.body = JSON.stringify([]);
+    } else {
+      console.log(res2.data);
+      ctx.body = res2.data;
+    }
   } else {
-    console.log(res.data);
-    ctx.body = res.data;
+    ctx.body = JSON.stringify({ message: '未找到应用' });
   }
 });
 
