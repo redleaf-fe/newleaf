@@ -18,21 +18,19 @@ const schema = new Schema({
   currentPage: {
     type: String,
   },
-  datetime: {
-    type: String,
-  },
 });
 
 router.get('/get', async (ctx) => {
   const { query } = ctx.request;
+  const { appName, currentPage } = query || {};
 
-  if (!validate({ ctx, schema, obj: query })) {
+  if (!validate({ ctx, schema, obj: { appName, currentPage } })) {
     return;
   }
 
   const res = await ctx.conn.models.appList.findAll({
     attributes: ['id'],
-    where: { appName: query.appName },
+    where: { appName },
   });
 
   if (res[0]) {
