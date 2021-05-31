@@ -2,14 +2,14 @@ const { nanoid } = require('nanoid');
 
 module.exports = async ({ ctx, modelName, idName }) => {
   let id = nanoid(20);
-  let res = await ctx.conn.models[modelName].findAll({
+  let res = await ctx.conn.models[modelName].findOne({
     attributes: [idName],
     where: { [idName]: id },
   });
 
-  while (res.length > 0) {
+  while (res) {
     id = nanoid(20);
-    res = await ctx.conn.models[modelName].findAll({
+    res = await ctx.conn.models[modelName].findOne({
       attributes: [idName],
       where: { [idName]: id },
     });
