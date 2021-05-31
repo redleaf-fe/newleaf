@@ -28,17 +28,17 @@ router.get('/get', async (ctx) => {
     return;
   }
 
-  const res = await ctx.conn.models.appList.findAll({
+  const res = await ctx.conn.models.appList.findOne({
     attributes: ['id'],
     where: { appName },
   });
 
-  if (res[0]) {
+  if (res) {
     const res2 = await axios({
       url: config.logSeverPath,
       method: 'get',
       headers: { 'Content-Type': 'application/json' },
-      params: { appId: res[0].id, ...query },
+      params: { appId: res.id, ...query },
     });
 
     ctx.body = res2.data;
