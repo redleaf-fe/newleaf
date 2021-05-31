@@ -22,13 +22,13 @@ const schema = new Schema({
 });
 
 router.get('/ids', async (ctx) => {
-  const res = await ctx.conn.models.user.findAll({
+  const res = await ctx.conn.models.user.findOne({
     attributes: ['appList'],
     where: { uid: ctx.uid },
   });
 
-  if (res.length > 0) {
-    ctx.body = JSON.stringify(res[0].appList.split(','));
+  if (res) {
+    ctx.body = JSON.stringify(res.appList.split(','));
   } else {
     ctx.body = JSON.stringify({ message: '未找到用户' });
   }
@@ -37,27 +37,18 @@ router.get('/ids', async (ctx) => {
 router.get('/list', async (ctx) => {
   // todo: 搜索条件
   // const { user } = ctx.request.query;
-  const res = await ctx.conn.models.user.findAll({
+  const res = await ctx.conn.models.user.findOne({
     attributes: ['appList'],
     where: { uid: ctx.uid },
   });
 
-  if (res.length > 0) {
-    const arr = [];
+  if (res) {
     // 查找appList表获取详情
-    res[0].appList.split(',').forEach((v) => {
-      if (v) {
-        arr.push(
-          ctx.conn.models.appList.findAll({
-            attributes: ['appName', 'git', 'updatedAt'],
-            where: { id: v },
-          })
-        );
-      }
-    });
-    ctx.body = await Promise.all(arr).then((result) => {
-      return result.map((v) => v[0]);
-    });
+    const res2 = await ctx.conn.models.appList.findAll({
+      attributes: ['appName', 'git', 'updatedAt'],
+      where: { id: res.appList.split(',') },
+    })
+    ctx.body = res2;
   } else {
     ctx.body = JSON.stringify({ message: '未找到用户' });
   }
@@ -72,12 +63,12 @@ router.post('/save', async (ctx) => {
 
   // 编辑
   if (id) {
-    const res = await ctx.conn.models.appList.findAll({
+    const res = await ctx.conn.models.appList.findOne({
       attributes: ['id'],
       where: { id },
     });
 
-    if (res.length > 0) {
+    if (res) {
       await ctx.conn.models.appList.update(
         {
           appName,
@@ -121,14 +112,14 @@ router.post('/save', async (ctx) => {
       })
     ) {
       // 在用户表的appList字段中添加新创建的应用
-      const res = await ctx.conn.models.user.findAll({
+      const res = await ctx.conn.models.user.findOne({
         attributes: ['appList'],
         where: { uid: ctx.uid },
       });
       await ctx.conn.models.user.update(
         {
           // appList为空，不进行拼接
-          appList: res[0].appList ? `${res[0].appList},${appId}` : appId,
+          appList: res.appList ? `${res.appList},${appId}` : appId,
         },
         {
           where: { uid: ctx.uid },
