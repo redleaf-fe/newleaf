@@ -8,12 +8,12 @@ module.exports = async ({
   createObj,
 }) => {
   // 查询重复的记录
-  const findRepeat = await ctx.conn.models[modelName].findAll({
+  const findRepeat = await ctx.conn.models[modelName].findOne({
     attributes: queryKey,
     where: queryObj,
   });
 
-  if (findRepeat.length > 0) {
+  if (findRepeat) {
     ctx.status = 400;
     ctx.body = JSON.stringify({ message: repeatMsg });
     return false;
