@@ -37,7 +37,7 @@ const schema = new Schema({
 
 async function setCookie({ ctx, uid, userName }) {
   // 判断是否已经登录过
-  const res = await ctx.conn.models.login.findAll({
+  const res = await ctx.conn.models.login.findOne({
     attributes: ['uid'],
     where: { uid },
   });
@@ -49,7 +49,7 @@ async function setCookie({ ctx, uid, userName }) {
     idName: 'uid'
   });
 
-  if (res.length > 0) {
+  if (res) {
     // 更新token
     await ctx.conn.models.login.update(
       {
@@ -80,15 +80,15 @@ router.post('/login', async (ctx) => {
 
   const sha256 = crypto.createHash('sha256');
   const encrypt = sha256.update(password + salt).digest('base64');
-  const res = await ctx.conn.models.user.findAll({
+  const res = await ctx.conn.models.user.findOne({
     attributes: ['password', 'uid', 'userName'],
     where: { userName },
   });
 
-  if (res.length > 0) {
+  if (res) {
     // 校验密码
-    if (res[0].password === encrypt) {
-      await setCookie({ ctx, uid: res[0].uid, userName: res[0].userName });
+    if (res.password === encrypt) {
+      await setCookie({ ctx, uid: res.uid, userName: res.userName });
 
       ctx.status = 302;
       ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
