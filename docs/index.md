@@ -14,6 +14,15 @@ git clone https://github.com/redleaf-fe/newleaf.git
 yarn
 或
 npm i
+
+// 需要先安装数据库
+
+// 启动服务
+yarn dev
+或
+npm run dev
+或
+使用 pm2 等方式启动
 ```
 
 newleaf 使用 sequelize 进行数据库操作，默认使用 mysql 数据库，可以进行替换，具体可查看 [sequelize 文档](https://github.com/sequelize/sequelize)
@@ -46,12 +55,7 @@ newleaf 使用 sequelize 进行数据库操作，默认使用 mysql 数据库，
   // 中心服务sign cookie所用的key
   "keys": "this_is_a_newleaf,this_is_another_leaf",
 
-  // 日志部分的数据库配置
-  "logDatabaseHost": "localhost",
-  "logDatabaseUserName": "root",
-  "logDatabasePassword": "123456",
-  "logDatabasePort": 3306,
-  "logDatabaseName": "newleaf_log"
+  // 日志
 }
 
 ```
