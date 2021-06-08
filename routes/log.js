@@ -43,7 +43,7 @@ router.get('/get', async (ctx) => {
 
     ctx.body = res2.data;
   } else {
-    ctx.body = JSON.stringify({ message: '未找到应用' });
+    ctx.body = { message: '未找到应用' };
   }
 });
 

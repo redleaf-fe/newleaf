@@ -91,14 +91,14 @@ router.post('/login', async (ctx) => {
       await setCookie({ ctx, uid: res.uid, userName: res.userName });
 
       ctx.status = 302;
-      ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+      ctx.body = { redirectUrl: '/dashboard' };
     } else {
       ctx.status = 400;
-      ctx.body = JSON.stringify({ message: '用户名或密码错误' });
+      ctx.body = { message: '用户名或密码错误' };
     }
   } else {
     ctx.status = 400;
-    ctx.body = JSON.stringify({ message: '用户未注册' });
+    ctx.body = { message: '用户未注册' };
   }
 });
 
@@ -135,7 +135,7 @@ router.post('/register', async (ctx) => {
     await setCookie({ ctx, uid, userName });
 
     ctx.status = 302;
-    ctx.body = JSON.stringify({ redirectUrl: '/dashboard' });
+    ctx.body = { redirectUrl: '/dashboard' };
   }
 });
 

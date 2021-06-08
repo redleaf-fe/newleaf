@@ -15,7 +15,7 @@ module.exports = async ({
 
   if (findRepeat) {
     ctx.status = 400;
-    ctx.body = JSON.stringify({ message: repeatMsg });
+    ctx.body = { message: repeatMsg };
     return false;
   }
 
