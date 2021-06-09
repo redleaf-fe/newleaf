@@ -13,6 +13,8 @@ module.exports = (conn) => {
         type: DataTypes.STRING(20),
         primaryKey: true,
       },
+      // 是否删除
+      isDeleted: { type: DataTypes.BOOLEAN, defaultValue: false },
       // 创建人、编辑人 uid
       creator: { type: DataTypes.STRING(20), allowNull: false },
       updater: { type: DataTypes.STRING(20), allowNull: false },
