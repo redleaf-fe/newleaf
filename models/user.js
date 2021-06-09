@@ -9,12 +9,6 @@ module.exports = (conn) => {
       password: { type: DataTypes.STRING(80), allowNull: false },
       // 用户Id
       uid: { type: DataTypes.STRING(20), primaryKey: true },
-      // 用户的应用
-      // {
-      //   id: 'xxx',
-      //   auth: 'admin', admin, develop, view
-      // }
-      appList: DataTypes.TEXT,
     },
     {
       createdAt: false,
