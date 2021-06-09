@@ -46,7 +46,7 @@ async function setCookie({ ctx, uid, userName }) {
   const token = await idGenerate({
     ctx,
     modelName: 'login',
-    idName: 'uid'
+    idName: 'uid',
   });
 
   if (res) {
@@ -69,7 +69,7 @@ async function setCookie({ ctx, uid, userName }) {
   }
 
   ctx.cookies.set('token', token, cookieConfig);
-  ctx.cookies.set('userName', userName, cookieConfig);
+  ctx.cookies.set('userName', userName);
 }
 
 router.post('/login', async (ctx) => {
@@ -114,7 +114,7 @@ router.post('/register', async (ctx) => {
   const uid = await idGenerate({
     ctx,
     modelName: 'user',
-    idName: 'uid'
+    idName: 'uid',
   });
 
   if (
@@ -127,7 +127,6 @@ router.post('/register', async (ctx) => {
       createObj: {
         userName,
         password: encrypt,
-        appList: '',
         uid,
       },
     })
