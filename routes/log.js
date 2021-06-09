@@ -28,7 +28,7 @@ router.get('/get', async (ctx) => {
     return;
   }
 
-  const res = await ctx.conn.models.appList.findOne({
+  const res = await ctx.conn.models.app.findOne({
     attributes: ['id'],
     where: { appName },
   });
