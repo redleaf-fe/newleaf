@@ -21,21 +21,25 @@ const schema = new Schema({
   },
 });
 
-router.get('/list', async (ctx) => {
-  // todo: 搜索条件
-  // const { user } = ctx.request.query;
-  const res = await ctx.conn.models.user.findOne({
+const getAppList = async (ctx, next) => {
+  ctx.appListRes = await ctx.conn.models.user.findOne({
     attributes: ['appList'],
     where: { uid: ctx.uid },
   });
+  await next();
+};
 
-  if (res) {
+router.get('/list', getAppList, async (ctx) => {
+  // todo: 搜索条件
+  if (ctx.appListRes) {
     // 查找appList表获取详情
-    const res2 = await ctx.conn.models.appList.findAll({
+    const res = await ctx.conn.models.appList.findAll({
       attributes: ['appName', 'git', 'updatedAt', 'id'],
-      where: { id: Object.values(JSON.parse(res.appList)).map((v) => v.id) },
+      where: {
+        id: Object.values(JSON.parse(ctx.appListRes.appList)).map((v) => v.id),
+      },
     });
-    ctx.body = res2;
+    ctx.body = res;
   } else {
     ctx.body = { message: '未找到用户' };
   }
@@ -52,7 +56,39 @@ router.get('/detail', async (ctx) => {
   ctx.body = res || { message: '未找到应用' };
 });
 
-router.post('/save', async (ctx) => {
+router.post('/delete', getAppList, async (ctx) => {
+  const { id = '' } = ctx.request.body;
+
+  if (id) {
+    // 删除所有user记录中包含的该app的信息
+    await ctx.conn.models.user.update(
+      {
+        appList: ctx.appListRes.appList
+          ? JSON.stringify(
+              JSON.parse(ctx.appListRes.appList).concat({
+                id: appId,
+                auth: 'admin',
+              })
+            )
+          : JSON.stringify([{ id: appId, auth: 'admin' }]),
+      },
+      {
+        where: { uid: ctx.uid },
+      }
+    );
+
+    // todo: 删除相关日志和发布记录，文件等
+    // await ctx.conn.models.appList.destroy({
+    //   where: { id },
+    // });
+
+    ctx.body = { message: '删除成功' };
+  }
+
+  ctx.body = { message: '应用id必填' };
+});
+
+router.post('/save', getAppList, async (ctx) => {
   const { appName, git, desc, id } = ctx.request.body;
 
   if (!validate({ ctx, schema, obj: { appName, git } })) {
@@ -88,14 +124,14 @@ router.post('/save', async (ctx) => {
     // 创建
     const appId = await idGenerate({
       ctx,
-      modelName: 'appList',
+      modelName: 'app',
       idName: 'id',
     });
 
     if (
       await createUniq({
         ctx,
-        modelName: 'appList',
+        modelName: 'app',
         queryKey: ['appName'],
         queryObj: { appName },
         repeatMsg: '应用名称已被使用',
@@ -110,16 +146,15 @@ router.post('/save', async (ctx) => {
       })
     ) {
       // 在用户表的appList字段中添加新创建的应用
-      const res = await ctx.conn.models.user.findOne({
-        attributes: ['appList'],
-        where: { uid: ctx.uid },
-      });
       await ctx.conn.models.user.update(
         {
           // appList为空，不进行拼接
-          appList: res.appList
+          appList: ctx.appListRes.appList
             ? JSON.stringify(
-                JSON.parse(res.appList).concat({ id: appId, auth: 'admin' })
+                JSON.parse(ctx.appListRes.appList).concat({
+                  id: appId,
+                  auth: 'admin',
+                })
               )
             : JSON.stringify([{ id: appId, auth: 'admin' }]),
         },
