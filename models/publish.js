@@ -2,7 +2,7 @@ const { DataTypes, Sequelize } = require('sequelize');
 
 module.exports = (conn) => {
   return conn.define(
-    'publishList',
+    'publish',
     {
       branch: { type: DataTypes.STRING(200), allowNull: false },
       desc: DataTypes.STRING(100),

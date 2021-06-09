@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (conn) => {
   return conn.define(
-    'appList',
+    'app',
     {
       // 只支持英文、数字和-
       appName: { type: DataTypes.STRING(20), allowNull: false },
@@ -17,7 +17,7 @@ module.exports = (conn) => {
       creator: { type: DataTypes.STRING(20), allowNull: false },
       updater: { type: DataTypes.STRING(20), allowNull: false },
       // git地址，允许为空，部分应用不需要使用发布相关功能
-      git: DataTypes.STRING(200),
+      git: DataTypes.STRING(300),
     },
     {
       // createdAt: false,
