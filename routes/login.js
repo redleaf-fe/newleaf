@@ -69,7 +69,7 @@ async function setCookie({ ctx, uid, userName }) {
   }
 
   ctx.cookies.set('token', token, cookieConfig);
-  ctx.cookies.set('userName', userName);
+  ctx.cookies.set('userName', userName, { httpOnly: false });
 }
 
 router.post('/login', async (ctx) => {
