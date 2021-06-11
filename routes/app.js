@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const Schema = require('validate');
+const { Op } = require('sequelize');
 
 const { idGenerate, createUniq } = require('../services');
 const { validate } = require('../utils');
@@ -28,12 +29,25 @@ router.get('/list', async (ctx) => {
   });
 
   if (appIds.length > 0) {
+    const { appName = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
+    const filter = {
+      [Op.and]: [
+        {
+          id: appIds.map((v) => v.appId),
+        },
+      ],
+    };
+  
+    if (appName) {
+      filter[Op.and].push({ appName: { [Op.like]: `%${appName}%` } });
+    }
     // 查找app表获取详情
-    const res = await ctx.conn.models.app.findAll({
+    const res = await ctx.conn.models.app.findAndCountAll({
       attributes: ['appName', 'git', 'updatedAt', 'id'],
-      where: {
-        id: appIds.map((v) => v.appId),
-      },
+      where: filter,
+      order: ['createdAt'],
+      offset: pageSize * (currentPage - 1),
+      limit: pageSize,
     });
     ctx.body = res;
   } else {
@@ -69,7 +83,7 @@ router.post('/delete', async (ctx) => {
     // todo: 删除相关日志和发布记录，文件等
 
     ctx.body = { message: '删除成功' };
-  }else {
+  } else {
     ctx.body = { message: '应用id必填' };
   }
 });
