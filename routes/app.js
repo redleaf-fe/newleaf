@@ -37,7 +37,7 @@ router.get('/list', async (ctx) => {
         },
       ],
     };
-  
+
     if (appName) {
       filter[Op.and].push({ appName: { [Op.like]: `%${appName}%` } });
     }
@@ -51,7 +51,7 @@ router.get('/list', async (ctx) => {
     });
     ctx.body = res;
   } else {
-    ctx.body = { message: '未找到用户' };
+    ctx.body = { rows: [], count: 0 };
   }
 });
 
@@ -91,7 +91,7 @@ router.post('/delete', async (ctx) => {
 router.post('/save', async (ctx) => {
   const { appName, git, desc, id } = ctx.request.body;
 
-  if (!validate({ ctx, schema, obj: { appName, git } })) {
+  if (!validate({ ctx, schema, obj: { appName } })) {
     return;
   }
 
@@ -145,9 +145,16 @@ router.post('/save', async (ctx) => {
         },
       })
     ) {
+      const res = await ctx.conn.models.user.findOne({
+        attributes: ['userName'],
+        where: { uid: ctx.uid },
+      });
+
       await ctx.conn.models.userApp.create({
         uid: ctx.uid,
+        userName: res.userName,
         appId,
+        appName,
         auth: 'admin',
       });
       ctx.body = { message: '创建成功' };
