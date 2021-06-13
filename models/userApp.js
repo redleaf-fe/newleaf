@@ -7,10 +7,17 @@ module.exports = (conn) => {
     {
       // 用户Id
       uid: DataTypes.STRING(20),
+      // 用户名
+      userName: DataTypes.STRING(20),
+      // 应用名称
+      appName: DataTypes.STRING(20),
       // 应用Id
       appId: DataTypes.STRING(20),
-      // 用户权限：admin, develop, view
-      auth: DataTypes.STRING(20),
+      // 用户权限
+      auth: {
+        type: DataTypes.ENUM,
+        values: ['admin', 'develop', 'view'],
+      },
     },
     {
       createdAt: false,
