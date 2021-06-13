@@ -77,6 +77,11 @@ router.post('/save', async (ctx) => {
     ctx.request.body.map(async (v) => {
       const { uid, userName, auth } = v;
 
+      // 不能操作自己的权限状态
+      if (uid === ctx.uid) {
+        return Promise.resolve(1);
+      }
+
       const findRes = await ctx.conn.models.userApp.findOne({
         attributes: ['uid', 'appId', 'auth'],
         where: {
@@ -85,7 +90,7 @@ router.post('/save', async (ctx) => {
         },
       });
 
-      if (findRes && auth !== findRes.auth) {
+      if (findRes) {
         await ctx.conn.models.userApp.update(
           {
             auth,
