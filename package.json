@@ -23,7 +23,6 @@
   "devDependencies": {
     "conventional-changelog-cli": "^2.1.1",
     "cz-conventional-changelog": "^3.3.0",
-    "docsify": "^4.12.1",
     "prettier": "^2.2.1",
     "koa-logger": "^3.2.1"
   },
