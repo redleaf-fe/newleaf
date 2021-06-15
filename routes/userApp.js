@@ -31,12 +31,14 @@ const schema = new Schema({
 });
 
 router.get('/list', async (ctx) => {
-  const { id } = ctx.request.query;
+  const { id, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   if (id) {
     const res = await ctx.conn.models.userApp.findAndCountAll({
       attributes: ['uid', 'userName', 'auth'],
       where: { appId: id },
+      offset: pageSize * (currentPage - 1),
+      limit: Number(pageSize),
     });
 
     ctx.body = res;
@@ -45,7 +47,38 @@ router.get('/list', async (ctx) => {
   }
 });
 
-router.post('/delete', async (ctx) => {});
+router.post('/delete', async (ctx) => {
+  const { appId, uid } = ctx.request.body;
+
+  // 不能操作自己的权限状态
+  if (uid === ctx.uid) {
+    ctx.body = { message: '没有操作权限' };
+    return;
+  }
+
+  const opAuth = await ctx.conn.models.userApp.findOne({
+    attributes: ['auth'],
+    where: {
+      uid: ctx.uid,
+      appId,
+    },
+  });
+
+  // 非管理员不能操作
+  if (opAuth.auth !== 'admin') {
+    ctx.body = { message: '没有操作权限' };
+    return;
+  }
+
+  await ctx.conn.models.userApp.destroy({
+    where: {
+      uid,
+      appId,
+    },
+  });
+
+  ctx.body = { message: '删除成功' };
+});
 
 router.post('/save', async (ctx) => {
   if (!Array.isArray(ctx.request.body)) {
@@ -103,6 +136,7 @@ router.post('/save', async (ctx) => {
           }
         );
       } else {
+        // appName和userName直接从请求中读取，如果要求严格，可以根据id从对应表中读取
         await ctx.conn.models.userApp.create({
           appId,
           appName,
