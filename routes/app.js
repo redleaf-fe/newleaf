@@ -7,7 +7,6 @@ const { validate } = require('../utils');
 
 const router = new Router();
 
-// 应用名和git地址只支持英文
 const schema = new Schema({
   appName: {
     type: String,
@@ -47,7 +46,7 @@ router.get('/list', async (ctx) => {
       where: filter,
       order: ['createdAt'],
       offset: pageSize * (currentPage - 1),
-      limit: pageSize,
+      limit: Number(pageSize),
     });
     ctx.body = res;
   } else {
