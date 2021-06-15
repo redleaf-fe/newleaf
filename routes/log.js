@@ -1,50 +1,25 @@
 const Router = require('koa-router');
-const Schema = require('validate');
 const axios = require('axios');
 const config = require('../env.json');
 
-const { validate } = require('../utils');
-
 const router = new Router();
 
-const schema = new Schema({
-  appName: {
-    type: String,
-    required: true,
-    message: {
-      required: '参数中缺少应用名称',
-    },
-  },
-  currentPage: {
-    type: String,
-  },
-});
-
 router.get('/get', async (ctx) => {
-  const { query } = ctx.request;
-  const { appName, currentPage } = query || {};
+  const { appId } = ctx.request.query;
 
-  if (!validate({ ctx, schema, obj: { appName, currentPage } })) {
+  if (!appId) {
+    ctx.body = { message: '应用id必填' };
     return;
   }
 
-  const res = await ctx.conn.models.app.findOne({
-    attributes: ['id'],
-    where: { appName },
+  const res = await axios({
+    url: config.logSeverPath,
+    method: 'get',
+    headers: { 'Content-Type': 'application/json' },
+    params: { appId, ...ctx.request.query },
   });
 
-  if (res) {
-    const res2 = await axios({
-      url: config.logSeverPath,
-      method: 'get',
-      headers: { 'Content-Type': 'application/json' },
-      params: { appId: res.id, ...query },
-    });
-
-    ctx.body = res2.data;
-  } else {
-    ctx.body = { message: '未找到应用' };
-  }
+  ctx.body = res.data;
 });
 
 module.exports = router.routes();
