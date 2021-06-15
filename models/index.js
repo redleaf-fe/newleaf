@@ -3,7 +3,7 @@ module.exports = (conn) => {
     user: require('./user')(conn),
     login: require('./login')(conn),
     app: require('./app')(conn),
-    publish: require('./publish')(conn),
+    appPublish: require('./appPublish')(conn),
     userApp: require('./userApp')(conn),
   };
 };
