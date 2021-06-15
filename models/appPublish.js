@@ -1,17 +1,21 @@
-const { DataTypes, Sequelize } = require('sequelize');
+const { DataTypes } = require('sequelize');
 
+// app的发布数据
 module.exports = (conn) => {
   return conn.define(
-    'publish',
+    'appPublish',
     {
       branch: { type: DataTypes.STRING(200), allowNull: false },
-      desc: DataTypes.STRING(100),
       commitId: { type: DataTypes.STRING(200), allowNull: false },
-      // 发布Id，用时间戳表示
+      desc: DataTypes.STRING(100),
+      name: { type: DataTypes.STRING(20), allowNull: false },
+      appId: DataTypes.STRING(20),
+      appName: DataTypes.STRING(20),
+      // 发布Id
       id: {
-        type: DataTypes.DATE,
+        type: DataTypes.STRING(20),
         primaryKey: true,
-        defaultValue: Sequelize.NOW,
+        allowNull: false,
       },
       // 创建人、编辑人 uid
       creator: { type: DataTypes.STRING(20), allowNull: false },
