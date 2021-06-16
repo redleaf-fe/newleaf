@@ -55,7 +55,13 @@ newleaf 使用 sequelize 进行数据库操作，默认使用 mysql 数据库，
   // 中心服务sign cookie所用的key
   "keys": "this_is_a_newleaf,this_is_another_leaf",
 
-  // 日志
+  // 日志查询服务的请求接口地址
+  "logSeverPath": "http://localhost:3013/get",
+
+  // git REST API的接口地址，一般修改host部分即可
+  "gitSeverPath": "http://localhost:9980/api/v4/",
+  // git 的root账号Access Token
+  "gitToken": "Rd-AMYDB2KwQLRbZEQWD"
 }
 
 ```
