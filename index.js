@@ -8,7 +8,7 @@ const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
 
 const config = require('./env.json');
-const { Database } = require('./services');
+const { Database, CodeRepo } = require('./services');
 const { LoginMiddleware } = require('./middlewares');
 
 async function main() {
@@ -41,6 +41,7 @@ async function main() {
   const app = new Koa();
   const router = new Router();
 
+  app.context.codeRepo = new CodeRepo('gitlab');
   app.context.conn = conn;
 
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
@@ -52,13 +53,14 @@ async function main() {
   app.use(async (ctx, next) => {
     ctx.set('Access-Control-Allow-Origin', 'http://localhost:3020');
     ctx.set('Access-Control-Allow-Headers', 'content-type');
+    ctx.set('Access-Control-Allow-Credentials', 'true');
     await next();
   });
 
-  if(config.dev){
+  if (config.dev) {
     app.use(Logger());
   }
-  
+
   app.use(BodyParser());
 
   // 登录和权限
