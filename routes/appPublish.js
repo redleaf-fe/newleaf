@@ -32,16 +32,22 @@ router.get('/list', async (ctx) => {
     return;
   }
 
-  const filter = {};
+  const filter = {
+    [Op.and]: [
+      {
+        appId,
+      },
+    ],
+  };
 
   if (publishName) {
-    filter.name = { [Op.like]: `%${publishName}%` };
+    filter[Op.and].push({ name: { [Op.like]: `%${publishName}%` } });
   }
 
   const publish = await ctx.conn.models.appPublish.findAndCountAll({
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
-    where: { filter },
+    where: filter,
     order: ['updatedAt'],
   });
 
