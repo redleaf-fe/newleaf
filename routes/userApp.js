@@ -1,8 +1,6 @@
 const Router = require('koa-router');
 const Schema = require('validate');
-const { Op } = require('sequelize');
 
-const { idGenerate, createUniq } = require('../services');
 const { validate } = require('../utils');
 
 const router = new Router();
