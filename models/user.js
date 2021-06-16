@@ -6,7 +6,8 @@ module.exports = (conn) => {
     'user',
     {
       userName: { type: DataTypes.STRING(20), allowNull: false },
-      password: { type: DataTypes.STRING(80), allowNull: false },
+      password: { type: DataTypes.STRING(100), allowNull: false },
+      email: { type: DataTypes.STRING(100), allowNull: false },
       // 用户Id
       uid: { type: DataTypes.STRING(20), primaryKey: true },
     },
