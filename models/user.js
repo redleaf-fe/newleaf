@@ -5,7 +5,7 @@ module.exports = (conn) => {
   return conn.define(
     'user',
     {
-      userName: { type: DataTypes.STRING(20), allowNull: false },
+      username: { type: DataTypes.STRING(20), allowNull: false },
       password: { type: DataTypes.STRING(100), allowNull: false },
       email: { type: DataTypes.STRING(100), allowNull: false },
       // 用户Id

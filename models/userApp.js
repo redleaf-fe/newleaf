@@ -8,7 +8,7 @@ module.exports = (conn) => {
       // 用户Id
       uid: DataTypes.STRING(20),
       // 用户名
-      userName: DataTypes.STRING(20),
+      username: DataTypes.STRING(20),
       // 应用名称
       appName: DataTypes.STRING(20),
       // 应用Id

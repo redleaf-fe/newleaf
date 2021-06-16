@@ -4,17 +4,17 @@ const { Op } = require('sequelize');
 const router = new Router();
 
 router.get('/getByName', async (ctx) => {
-  const { userName } = ctx.request.query;
+  const { username } = ctx.request.query;
 
-  if (userName) {
+  if (username) {
     const res = await ctx.conn.models.user.findAll({
-      attributes: ['uid', 'userName'],
-      where: { userName: { [Op.like]: `%${userName}%` } },
-      order: ['userName'],
+      attributes: ['uid', 'username'],
+      where: { username: { [Op.like]: `%${username}%` } },
+      order: ['username'],
     });
     ctx.body = res;
   } else {
-    ctx.body = { message: 'userName必填' };
+    ctx.body = { message: 'username必填' };
   }
 });
 

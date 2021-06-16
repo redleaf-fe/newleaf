@@ -24,7 +24,7 @@ module.exports = async (ctx, next) => {
           where: { loginToken: token },
         });
       } else {
-        // 方便后面的逻辑获取用户id；cookie中有userName，但是因为cookie可以手动修改，所以不使用userName做任何写操作
+        // 方便后面的逻辑获取用户id；cookie中有username，但是因为cookie可以手动修改，所以不使用username做任何写操作
         ctx.uid = res.uid;
         await next();
       }

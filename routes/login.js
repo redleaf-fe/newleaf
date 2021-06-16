@@ -15,7 +15,7 @@ const cookieConfig = {
 };
 
 const baseSchema = {
-  userName: {
+  username: {
     type: String,
     required: true,
     length: { min: 4, max: 20 },
@@ -53,7 +53,7 @@ const registerSchema = new Schema({
   },
 });
 
-async function setCookie({ ctx, uid, userName }) {
+async function setCookie({ ctx, uid, username }) {
   // 判断是否已经登录过
   const res = await ctx.conn.models.login.findOne({
     attributes: ['uid'],
@@ -87,26 +87,26 @@ async function setCookie({ ctx, uid, userName }) {
   }
 
   ctx.cookies.set('token', token, cookieConfig);
-  ctx.cookies.set('userName', userName, { httpOnly: false });
+  ctx.cookies.set('username', username, { httpOnly: false });
 }
 
 router.post('/login', async (ctx) => {
-  const { userName, password } = ctx.request.body;
-  if (!validate({ ctx, schema: loginSchema, obj: { userName, password } })) {
+  const { username, password } = ctx.request.body;
+  if (!validate({ ctx, schema: loginSchema, obj: { username, password } })) {
     return;
   }
 
   const sha256 = crypto.createHash('sha256');
   const encrypt = sha256.update(password + salt).digest('base64');
   const res = await ctx.conn.models.user.findOne({
-    attributes: ['password', 'uid', 'userName'],
-    where: { userName },
+    attributes: ['password', 'uid', 'username'],
+    where: { username },
   });
 
   if (res) {
     // 校验密码
     if (res.password === encrypt) {
-      await setCookie({ ctx, uid: res.uid, userName: res.userName });
+      await setCookie({ ctx, uid: res.uid, username: res.username });
 
       ctx.status = 302;
       ctx.body = { redirectUrl: '/dashboard' };
@@ -121,12 +121,12 @@ router.post('/login', async (ctx) => {
 });
 
 router.post('/register', async (ctx) => {
-  const { userName, password, email } = ctx.request.body;
+  const { username, password, email } = ctx.request.body;
   if (
     !validate({
       ctx,
       schema: registerSchema,
-      obj: { userName, password, email },
+      obj: { username, password, email },
     })
   ) {
     return;
@@ -136,8 +136,8 @@ router.post('/register', async (ctx) => {
     (await findRepeat({
       ctx,
       modelName: 'user',
-      queryKey: ['userName'],
-      queryObj: { userName },
+      queryKey: ['username'],
+      queryObj: { username },
       repeatMsg: '用户名已被使用',
     })) ||
     (await findRepeat({
@@ -152,7 +152,7 @@ router.post('/register', async (ctx) => {
   }
 
   const res = await ctx.codeRepo.createUser({
-    username: userName,
+    username,
     password,
     email,
   });
@@ -163,13 +163,13 @@ router.post('/register', async (ctx) => {
     const encrypt = sha256.update(password + salt).digest('base64');
 
     await ctx.conn.models.user.create({
-      userName,
+      username,
       password: encrypt,
       uid,
       email,
     });
 
-    await setCookie({ ctx, uid, userName });
+    await setCookie({ ctx, uid, username });
 
     ctx.status = 302;
     ctx.body = { redirectUrl: '/dashboard' };

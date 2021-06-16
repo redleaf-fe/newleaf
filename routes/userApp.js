@@ -11,7 +11,7 @@ const schema = new Schema({
       uid: {
         required: true,
       },
-      userName: {
+      username: {
         required: true,
       },
       appId: {
@@ -33,7 +33,7 @@ router.get('/list', async (ctx) => {
 
   if (id) {
     const res = await ctx.conn.models.userApp.findAndCountAll({
-      attributes: ['uid', 'userName', 'auth'],
+      attributes: ['uid', 'username', 'auth'],
       where: { appId: id },
       offset: pageSize * (currentPage - 1),
       limit: Number(pageSize),
@@ -106,7 +106,7 @@ router.post('/save', async (ctx) => {
 
   await Promise.all(
     ctx.request.body.map(async (v) => {
-      const { uid, userName, auth } = v;
+      const { uid, username, auth } = v;
 
       // 不能操作自己的权限状态
       if (uid === ctx.uid) {
@@ -134,12 +134,12 @@ router.post('/save', async (ctx) => {
           }
         );
       } else {
-        // appName和userName直接从请求中读取，如果要求严格，可以根据id从对应表中读取
+        // appName和username直接从请求中读取，如果要求严格，可以根据id从对应表中读取
         await ctx.conn.models.userApp.create({
           appId,
           appName,
           uid,
-          userName,
+          username,
           auth,
         });
       }

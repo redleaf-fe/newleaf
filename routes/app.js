@@ -145,13 +145,13 @@ router.post('/save', async (ctx) => {
       })
     ) {
       const res = await ctx.conn.models.user.findOne({
-        attributes: ['userName'],
+        attributes: ['username'],
         where: { uid: ctx.uid },
       });
 
       await ctx.conn.models.userApp.create({
         uid: ctx.uid,
-        userName: res.userName,
+        username: res.username,
         appId,
         appName,
         auth: 'admin',
