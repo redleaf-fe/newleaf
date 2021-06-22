@@ -10,6 +10,8 @@ module.exports = (conn) => {
       email: { type: DataTypes.STRING(100), allowNull: false },
       // 用户Id
       uid: { type: DataTypes.STRING(20), primaryKey: true },
+      // git生成的用户Id
+      gitUid: { type: DataTypes.STRING(50), allowNull: false },
     },
     {
       createdAt: false,
