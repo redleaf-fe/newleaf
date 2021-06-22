@@ -53,7 +53,7 @@ const registerSchema = new Schema({
   },
 });
 
-async function setCookie({ ctx, uid, username }) {
+async function setCookie({ ctx, uid, gitUid, username }) {
   // 判断是否已经登录过
   const res = await ctx.conn.models.login.findOne({
     attributes: ['uid'],
@@ -82,6 +82,7 @@ async function setCookie({ ctx, uid, username }) {
   } else {
     await ctx.conn.models.login.create({
       uid,
+      gitUid,
       loginToken: token,
     });
   }
@@ -99,14 +100,14 @@ router.post('/login', async (ctx) => {
   const sha256 = crypto.createHash('sha256');
   const encrypt = sha256.update(password + salt).digest('base64');
   const res = await ctx.conn.models.user.findOne({
-    attributes: ['password', 'uid', 'username'],
+    attributes: ['password', 'uid', 'gitUid', 'username'],
     where: { username },
   });
 
   if (res) {
     // 校验密码
     if (res.password === encrypt) {
-      await setCookie({ ctx, uid: res.uid, username: res.username });
+      await setCookie({ ctx, uid: res.uid, gitUid: res.gitUid, username: res.username });
 
       ctx.status = 302;
       ctx.body = { redirectUrl: '/dashboard' };
@@ -158,7 +159,12 @@ router.post('/register', async (ctx) => {
   });
 
   if (res.data) {
-    const uid = res.data.id;
+    const uid = await idGenerate({
+      ctx,
+      modelName: 'user',
+      idName: 'uid',
+    });
+    const gitUid = res.data.id;
     const sha256 = crypto.createHash('sha256');
     const encrypt = sha256.update(password + salt).digest('base64');
 
@@ -166,10 +172,11 @@ router.post('/register', async (ctx) => {
       username,
       password: encrypt,
       uid,
+      gitUid,
       email,
     });
 
-    await setCookie({ ctx, uid, username });
+    await setCookie({ ctx, uid, gitUid, username });
 
     ctx.status = 302;
     ctx.body = { redirectUrl: '/dashboard' };
