@@ -65,28 +65,6 @@ router.get('/detail', async (ctx) => {
   ctx.body = res || { message: '未找到应用' };
 });
 
-router.post('/delete', async (ctx) => {
-  const { id = '' } = ctx.request.body;
-
-  if (id) {
-    await ctx.conn.models.userApp.destroy({
-      where: { appId: id },
-    });
-
-    await ctx.conn.models.app.update(
-      {
-        isDeleted: true,
-      },
-      { where: { id } }
-    );
-    // todo: 删除相关日志和发布记录，文件等
-
-    ctx.body = { message: '删除成功' };
-  } else {
-    ctx.body = { message: '应用id必填' };
-  }
-});
-
 router.post('/save', async (ctx) => {
   const { appName, git, desc, id } = ctx.request.body;
 
