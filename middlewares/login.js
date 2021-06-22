@@ -13,7 +13,7 @@ module.exports = async (ctx, next) => {
     gotoLogin();
   } else {
     const res = await ctx.conn.models.login.findOne({
-      attributes: ['uid', 'updatedAt'],
+      attributes: ['uid', 'gitUid', 'updatedAt'],
       where: { loginToken: token },
     });
     if (res) {
@@ -26,6 +26,7 @@ module.exports = async (ctx, next) => {
       } else {
         // 方便后面的逻辑获取用户id；cookie中有username，但是因为cookie可以手动修改，所以不使用username做任何写操作
         ctx.uid = res.uid;
+        ctx.gitUid = res.gitUid;
         await next();
       }
     } else {
