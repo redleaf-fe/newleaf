@@ -32,6 +32,15 @@ module.exports = {
     return res;
   },
 
+  async getUserOfGroup({ id, user_id }) {
+    const res = await req({
+      url: `/groups/${id}/members/${user_id}`,
+      method: 'get',
+    });
+
+    return res;
+  },
+
   async addUserIntoGroup({ group_id, user_id, access_level }) {
     const res = await req({
       url: `groups/${group_id}/members`,
@@ -40,6 +49,27 @@ module.exports = {
         user_id,
         access_level,
       },
+    });
+
+    return res;
+  },
+
+  async editUserInGroup({ group_id, user_id, access_level }) {
+    const res = await req({
+      url: `groups/${group_id}/members/${user_id}`,
+      method: 'put',
+      data: {
+        access_level,
+      },
+    });
+
+    return res;
+  },
+
+  async removeUserFromGroup({ group_id, user_id }) {
+    const res = await req({
+      url: `groups/${group_id}/members/${user_id}`,
+      method: 'delete',
     });
 
     return res;
