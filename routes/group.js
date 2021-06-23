@@ -21,9 +21,8 @@ const schema = new Schema({
 });
 
 router.get('/list', async (ctx) => {
-  const { groupName = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
+  const { currentPage = 1, pageSize = 10 } = ctx.request.query;
   const res = await ctx.codeRepo.getUserGroups({
-    search: groupName,
     id: ctx.gitUid,
     page: currentPage,
     per_page: pageSize,

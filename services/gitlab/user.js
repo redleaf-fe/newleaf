@@ -16,14 +16,12 @@ module.exports = {
     return res;
   },
 
-  async getUserGroups({ id, search, page, per_page, order_by }) {
+  async getUserGroups({ id, page, per_page }) {
     const res = await req({
       url: `users/${id}/memberships`,
       method: 'get',
       data: {
         type: 'Namespace',
-        order_by: order_by || 'updated_at',
-        search,
         page,
         per_page,
       },

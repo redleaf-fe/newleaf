@@ -40,12 +40,11 @@ module.exports = {
     return res;
   },
 
-  async getGroupMembers({ id, page, per_page, order_by }) {
+  async getGroupMembers({ id, page, per_page }) {
     const res = await req({
       url: `/groups/${id}/members`,
       method: 'get',
       data: {
-        order_by: order_by || 'updated_at',
         page,
         per_page,
       },
