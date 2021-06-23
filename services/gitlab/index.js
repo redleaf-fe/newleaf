@@ -1,9 +1,10 @@
-const UserMethod = require('./user');
-const GroupMethod = require('./group');
+const User = require('./user');
+const Group = require('./group');
+const Project = require('./project');
 
 class Gitlab {
   constructor() {
-    [UserMethod, GroupMethod].forEach((v) => {
+    [User, Group, Project].forEach((v) => {
       Object.keys(v).forEach((vv) => {
         this[vv] = v[vv];
       });
