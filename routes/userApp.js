@@ -1,152 +1,66 @@
 const Router = require('koa-router');
-const Schema = require('validate');
-
-const { validate } = require('../utils');
 
 const router = new Router();
 
-const schema = new Schema({
-  data: [
-    {
-      uid: {
-        required: true,
-      },
-      username: {
-        required: true,
-      },
-      appId: {
-        required: true,
-      },
-      appName: {
-        required: true,
-      },
-      auth: {
-        enum: ['admin', 'develop', 'view'],
-        required: true,
-      },
-    },
-  ],
-});
-
 router.get('/list', async (ctx) => {
-  const { id, currentPage = 1, pageSize = 10 } = ctx.request.query;
+  const { id, name, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   if (id) {
-    const res = await ctx.conn.models.userApp.findAndCountAll({
-      attributes: ['uid', 'username', 'auth'],
-      where: { appId: id },
-      offset: pageSize * (currentPage - 1),
-      limit: Number(pageSize),
+    const res = await ctx.codeRepo.getGroupMembers({
+      id,
+      page: currentPage,
+      per_page: pageSize,
+      search: name,
     });
 
-    ctx.body = res;
+    ctx.body = {
+      count: res.total,
+      rows: res.data,
+    };
   } else {
     ctx.body = { message: 'id必填' };
   }
 });
 
 router.post('/delete', async (ctx) => {
-  const { appId, uid } = ctx.request.body;
+  const { gitUid, groupId } = ctx.request.body;
 
-  // 不能操作自己的权限状态
-  if (uid === ctx.uid) {
-    ctx.body = { message: '没有操作权限' };
-    return;
-  }
-
-  const opAuth = await ctx.conn.models.userApp.findOne({
-    attributes: ['auth'],
-    where: {
-      uid: ctx.uid,
-      appId,
-    },
-  });
-
-  // 非管理员不能操作
-  if (opAuth.auth !== 'admin') {
-    ctx.body = { message: '没有操作权限' };
-    return;
-  }
-
-  await ctx.conn.models.userApp.destroy({
-    where: {
-      uid,
-      appId,
-    },
+  await ctx.codeRepo.removeUserFromGroup({
+    group_id: groupId,
+    user_id: gitUid,
   });
 
   ctx.body = { message: '删除成功' };
 });
 
 router.post('/save', async (ctx) => {
-  if (!Array.isArray(ctx.request.body)) {
-    ctx.body = { message: '只接收数组' };
-    return;
+  const { uid, gitUid, groupId, access } = ctx.request.body;
+
+  if (uid) {
+    // 创建
+    const res = await ctx.conn.models.user.findOne({
+      attributes: ['gitUid'],
+      where: { uid },
+    });
+
+    await ctx.codeRepo.addUserIntoGroup({
+      group_id: groupId,
+      user_id: res.gitUid,
+      access_level: access || 30,
+    });
+    ctx.body = { message: '操作成功' };
+  } else if (gitUid) {
+    // 编辑
+    await ctx.codeRepo.editUserInGroup({
+      group_id: groupId,
+      user_id: gitUid,
+      access_level: access || 30,
+    });
+
+    ctx.body = { message: '操作成功' };
+  } else {
+    ctx.body = { message: '用户id必填' };
   }
-
-  if (!validate({ ctx, schema, obj: { data: ctx.request.body } })) {
-    return;
-  }
-
-  // 这里假定都是操作一个应用而且都是一个用户操作的（请求是new-client页面发送），如果不是这些判断要放到循环里去
-  const { appId, appName } = ctx.request.body[0];
-
-  const opAuth = await ctx.conn.models.userApp.findOne({
-    attributes: ['auth'],
-    where: {
-      uid: ctx.uid,
-      appId,
-    },
-  });
-  // 非管理员不能操作
-  if (opAuth.auth !== 'admin') {
-    ctx.body = { message: '没有操作权限' };
-    return;
-  }
-
-  await Promise.all(
-    ctx.request.body.map(async (v) => {
-      const { uid, username, auth } = v;
-
-      // 不能操作自己的权限状态
-      if (uid === ctx.uid) {
-        return Promise.resolve(1);
-      }
-
-      const findRes = await ctx.conn.models.userApp.findOne({
-        attributes: ['uid', 'appId', 'auth'],
-        where: {
-          uid,
-          appId,
-        },
-      });
-
-      if (findRes) {
-        await ctx.conn.models.userApp.update(
-          {
-            auth,
-          },
-          {
-            where: {
-              uid,
-              appId,
-            },
-          }
-        );
-      } else {
-        // appName和username直接从请求中读取，如果要求严格，可以根据id从对应表中读取
-        await ctx.conn.models.userApp.create({
-          appId,
-          appName,
-          uid,
-          username,
-          auth,
-        });
-      }
-    })
-  );
-
-  ctx.body = { message: '操作成功' };
 });
 
 module.exports = router.routes();
