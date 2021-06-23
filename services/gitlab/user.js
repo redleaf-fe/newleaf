@@ -16,6 +16,7 @@ module.exports = {
     return res;
   },
 
+  // group
   async getUserGroups({ id, page, per_page }) {
     const res = await req({
       url: `users/${id}/memberships`,
@@ -39,9 +40,9 @@ module.exports = {
     return res;
   },
 
-  async addUserIntoGroup({ group_id, user_id, access_level }) {
+  async addUserIntoGroup({ id, user_id, access_level }) {
     const res = await req({
-      url: `groups/${group_id}/members`,
+      url: `groups/${id}/members`,
       method: 'post',
       data: {
         user_id,
@@ -52,9 +53,9 @@ module.exports = {
     return res;
   },
 
-  async editUserInGroup({ group_id, user_id, access_level }) {
+  async editUserInGroup({ id, user_id, access_level }) {
     const res = await req({
-      url: `groups/${group_id}/members/${user_id}`,
+      url: `groups/${id}/members/${user_id}`,
       method: 'put',
       data: {
         access_level,
@@ -64,9 +65,67 @@ module.exports = {
     return res;
   },
 
-  async removeUserFromGroup({ group_id, user_id }) {
+  async removeUserFromGroup({ id, user_id }) {
     const res = await req({
-      url: `groups/${group_id}/members/${user_id}`,
+      url: `groups/${id}/members/${user_id}`,
+      method: 'delete',
+    });
+
+    return res;
+  },
+
+  // project
+  async getUserProjects({ id, page, per_page }) {
+    const res = await req({
+      url: `users/${id}/memberships`,
+      method: 'get',
+      data: {
+        type: 'Project',
+        page,
+        per_page,
+      },
+    });
+
+    return res;
+  },
+
+  async getUserOfProject({ id, user_id }) {
+    const res = await req({
+      url: `/projects/${id}/members/${user_id}`,
+      method: 'get',
+    });
+
+    return res;
+  },
+
+  async addUserIntoProject({ id, user_id, access_level }) {
+    const res = await req({
+      url: `projects/${id}/members`,
+      method: 'post',
+      data: {
+        user_id,
+        access_level,
+      },
+    });
+
+    return res;
+  },
+
+  async editUserInProject({ id, user_id, access_level }) {
+    const res = await req({
+      url: `projects/${id}/members/${user_id}`,
+      method: 'put',
+      data: {
+        access_level,
+      },
+    });
+
+    return res;
+  },
+
+  async removeUserFromProject({ id, user_id }) {
+    const res = await req({
+      url: `projects/${id}/members/${user_id}`,
       method: 'delete',
     });
 
