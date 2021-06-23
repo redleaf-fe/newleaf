@@ -15,15 +15,55 @@ module.exports = {
     return res;
   },
 
-  async getGroupProjects({ id, search, page, per_page }) {
+  async updateGroup({ id, name, description }) {
+    const res = await req({
+      url: `groups/${id}`,
+      method: 'put',
+      data: {
+        name,
+        description,
+      },
+    });
+
+    return res;
+  },
+
+  async getGroupDetail({ id }) {
+    const res = await req({
+      url: `groups/${id}`,
+      method: 'get',
+      data: {
+        id,
+      },
+    });
+
+    return res;
+  },
+
+  async getGroupMembers({ id, search, page, per_page, order_by }) {
+    const res = await req({
+      url: `/groups/${id}/members`,
+      method: 'get',
+      data: {
+        search,
+        order_by: order_by || 'updated_at',
+        page,
+        per_page,
+      },
+    });
+
+    return res;
+  },
+
+  async getGroupProjects({ id, search, page, per_page, order_by }) {
     const res = await req({
       url: `/groups/${id}/projects`,
       method: 'get',
       data: {
         search,
-        order_by: 'updated_at',
+        order_by: order_by || 'updated_at',
         page,
-        per_page
+        per_page,
       },
     });
 
