@@ -6,4 +6,5 @@ module.exports = (router) => {
   router.use('/log', require('./log'));
   router.use('/user', require('./user'));
   router.use('/userApp', require('./userApp'));
+  router.use('/userGroup', require('./userGroup'));
 };

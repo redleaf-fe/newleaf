@@ -11,7 +11,7 @@ module.exports = async function ({ url, method = 'get', data = {} }) {
 
   if (method === 'get') {
     param.params = data;
-  } else if (method === 'post') {
+  } else if (['post', 'put'].includes(method)) {
     param.data = data;
   }
 
