@@ -13,12 +13,12 @@ module.exports = async (ctx, next) => {
     gotoLogin();
   } else {
     const res = await ctx.conn.models.login.findOne({
-      attributes: ['uid', 'gitUid', 'updatedAt'],
+      attributes: ['uid', 'gitUid', 'username', 'updatedAt'],
       where: { loginToken: token },
     });
     if (res) {
       // cookie中的token超过时间也要重新登录，并删除login中的记录
-      if (sessionValidTime <= new Date() - new Date(res.updatedAt)) {
+      if (sessionValidTime * 1000 <= new Date() - new Date(res.updatedAt)) {
         gotoLogin();
         await ctx.conn.models.login.destroy({
           where: { loginToken: token },
@@ -27,6 +27,7 @@ module.exports = async (ctx, next) => {
         // 方便后面的逻辑获取用户id；cookie中有username，但是因为cookie可以手动修改，所以不使用username做任何写操作
         ctx.uid = res.uid;
         ctx.gitUid = res.gitUid;
+        ctx.username = res.username;
         await next();
       }
     } else {

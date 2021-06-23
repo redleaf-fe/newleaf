@@ -10,7 +10,7 @@ const router = new Router();
 
 const cookieConfig = {
   signed: true,
-  maxAge: sessionValidTime,
+  maxAge: sessionValidTime * 1000,
   httpOnly: true,
 };
 
@@ -83,6 +83,7 @@ async function setCookie({ ctx, uid, gitUid, username }) {
     await ctx.conn.models.login.create({
       uid,
       gitUid,
+      username,
       loginToken: token,
     });
   }
@@ -107,7 +108,12 @@ router.post('/login', async (ctx) => {
   if (res) {
     // 校验密码
     if (res.password === encrypt) {
-      await setCookie({ ctx, uid: res.uid, gitUid: res.gitUid, username: res.username });
+      await setCookie({
+        ctx,
+        uid: res.uid,
+        gitUid: res.gitUid,
+        username: res.username,
+      });
 
       ctx.status = 302;
       ctx.body = { redirectUrl: '/dashboard' };
