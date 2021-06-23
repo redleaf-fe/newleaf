@@ -2,7 +2,8 @@ const Router = require('koa-router');
 const Schema = require('validate');
 
 const { findRepeat } = require('../services');
-const { validate } = require('../utils');
+const { validate, searchAndPage } = require('../utils');
+const { maxPageSize } = require('../const');
 
 const router = new Router();
 
@@ -21,12 +22,28 @@ const schema = new Schema({
 });
 
 router.get('/list', async (ctx) => {
-  const { currentPage = 1, pageSize = 10 } = ctx.request.query;
-  const res = await ctx.codeRepo.getUserGroups({
-    id: ctx.gitUid,
-    page: currentPage,
-    per_page: pageSize,
-  });
+  const { currentPage = 1, pageSize = 10, groupName } = ctx.request.query;
+  let res;
+  if (groupName) {
+    res = await ctx.codeRepo.getUserGroups({
+      id: ctx.gitUid,
+      page: 1,
+      per_page: maxPageSize,
+    });
+    res = searchAndPage({
+      data: res.data,
+      currentPage,
+      pageSize,
+      search: groupName,
+      searchKey: 'source_name',
+    });
+  } else {
+    res = await ctx.codeRepo.getUserGroups({
+      id: ctx.gitUid,
+      page: currentPage,
+      per_page: pageSize,
+    });
+  }
 
   await Promise.all(
     res.data.map(async (v) => {
