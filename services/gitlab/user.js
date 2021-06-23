@@ -15,4 +15,33 @@ module.exports = {
 
     return res;
   },
+
+  async getUserGroups({ id, search, page, per_page, order_by }) {
+    const res = await req({
+      url: `users/${id}/memberships`,
+      method: 'get',
+      data: {
+        type: 'Namespace',
+        order_by: order_by || 'updated_at',
+        search,
+        page,
+        per_page,
+      },
+    });
+
+    return res;
+  },
+
+  async addUserIntoGroup({ group_id, user_id, access_level }) {
+    const res = await req({
+      url: `groups/${group_id}/members`,
+      method: 'post',
+      data: {
+        user_id,
+        access_level,
+      },
+    });
+
+    return res;
+  },
 };
