@@ -17,6 +17,7 @@ module.exports = async function ({ url, method = 'get', data = {} }) {
 
   try {
     const res = await axios(param);
+    res.total = res.headers['x-total'];
     return res;
   } catch (e) {
     return e;
