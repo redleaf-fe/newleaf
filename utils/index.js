@@ -1,3 +1,5 @@
+const _chunk = require('lodash/chunk');
+
 module.exports = {
   toPromise(promise) {
     return promise
@@ -15,5 +17,13 @@ module.exports = {
       return false;
     }
     return true;
-  }
+  },
+  // 搜索分页
+  searchAndPage({ data, currentPage, pageSize, search, searchKey }) {
+    const ret = data.filter((v) => v[searchKey].includes(search));
+    return {
+      data: _chunk(ret, pageSize)[currentPage - 1],
+      total: ret.length,
+    };
+  },
 };
