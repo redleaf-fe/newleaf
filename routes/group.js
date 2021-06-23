@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 const Schema = require('validate');
 
-const { idGenerate, createUniq } = require('../services');
+const { findRepeat } = require('../services');
 const { validate } = require('../utils');
 
 const router = new Router();
@@ -22,10 +22,26 @@ const schema = new Schema({
 
 router.get('/list', async (ctx) => {
   const { groupName = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
-  res = await ctx.codeRepo.getUserGroups({ search: groupName, id: ctx.gitUid, page: currentPage, per_page: pageSize });
+  const res = await ctx.codeRepo.getUserGroups({
+    search: groupName,
+    id: ctx.gitUid,
+    page: currentPage,
+    per_page: pageSize,
+  });
+
+  await Promise.all(
+    res.data.map(async (v) => {
+      const res2 = await ctx.conn.models.group.findOne({
+        attributes: ['updater', 'updatedAt'],
+        where: { gitId: v.source_id },
+      });
+      v.updater = res2.updater;
+      v.updatedAt = res2.updatedAt;
+    })
+  );
 
   ctx.body = {
-    count: res.data.length,
+    count: res.total,
     rows: res.data,
   };
 });
@@ -33,12 +49,13 @@ router.get('/list', async (ctx) => {
 router.get('/detail', async (ctx) => {
   const { id = '' } = ctx.request.query;
 
-  const res = await ctx.conn.models.app.findOne({
-    attributes: ['appName', 'desc', 'git'],
-    where: { id },
-  });
+  if (!id) {
+    ctx.body = { message: 'id必填' };
+    return;
+  }
 
-  ctx.body = res || { message: '未找到应用' };
+  const res = await ctx.codeRepo.getGroupDetail({ id });
+  ctx.body = res.data;
 });
 
 router.post('/save', async (ctx) => {
@@ -50,30 +67,50 @@ router.post('/save', async (ctx) => {
 
   // 编辑
   if (id) {
-    // const res = await ctx.conn.models.app.findOne({
-    //   attributes: ['id'],
-    //   where: { id },
-    // });
-    // if (res) {
-    //   await ctx.conn.models.app.update(
-    //     {
-    //       appName,
-    //       desc,
-    //       updater: ctx.uid,
-    //       git,
-    //     },
-    //     {
-    //       where: { id },
-    //     }
-    //   );
-    //   ctx.body = { message: '保存成功' };
-    // } else {
-    //   ctx.status = 400;
-    //   ctx.body = { message: '未找到应用' };
-    // }
+    await ctx.codeRepo.updateGroup({ id, name, description });
+
+    await ctx.conn.models.group.update(
+      {
+        groupName: name,
+        creator: ctx.username,
+        updater: ctx.username,
+      },
+      {
+        where: {
+          gitId: id,
+        },
+      }
+    );
+
+    ctx.body = { message: '保存成功' };
   } else {
+    if (
+      await findRepeat({
+        ctx,
+        modelName: 'group',
+        queryKey: ['groupName'],
+        queryObj: { groupName: name },
+        repeatMsg: '组名已被使用',
+      })
+    ) {
+      return;
+    }
+
     // 创建
-    await ctx.codeRepo.createGroup({ name, description });
+    const res = await ctx.codeRepo.createGroup({ name, description });
+
+    await ctx.codeRepo.addUserIntoGroup({
+      group_id: res.data.id,
+      user_id: ctx.gitUid,
+      access_level: 50,
+    });
+
+    await ctx.conn.models.group.create({
+      groupName: name,
+      gitId: res.data.id,
+      creator: ctx.username,
+      updater: ctx.username,
+    });
 
     ctx.body = { message: '创建成功' };
   }
