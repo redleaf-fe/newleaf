@@ -12,12 +12,8 @@ module.exports = (conn) => {
       appId: DataTypes.STRING(20),
       appName: DataTypes.STRING(20),
       // 发布Id
-      id: {
-        type: DataTypes.STRING(20),
-        primaryKey: true,
-        allowNull: false,
-      },
-      // 创建人、编辑人 uid
+      id: { type: DataTypes.STRING(20), primaryKey: true, allowNull: false },
+      // 创建人、编辑人
       creator: { type: DataTypes.STRING(20), allowNull: false },
       updater: { type: DataTypes.STRING(20), allowNull: false },
     },

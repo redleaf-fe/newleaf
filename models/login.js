@@ -8,7 +8,7 @@ module.exports = (conn) => {
       // 用户Id
       uid: { type: DataTypes.STRING(20), primaryKey: true },
       // git生成的用户Id
-      gitUid: { type: DataTypes.STRING(50), allowNull: false },
+      gitUid: { type: DataTypes.STRING(20), allowNull: false },
       // session
       loginToken: { type: DataTypes.STRING(20), allowNull: false },
     },
