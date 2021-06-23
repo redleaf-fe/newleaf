@@ -1,16 +1,33 @@
 const Router = require('koa-router');
+const { searchAndPage } = require('../utils');
+const { maxPageSize } = require('../const');
 
 const router = new Router();
 
 router.get('/list', async (ctx) => {
-  const { id, currentPage = 1, pageSize = 10 } = ctx.request.query;
-
+  const { id, name, currentPage = 1, pageSize = 10 } = ctx.request.query;
   if (id) {
-    const res = await ctx.codeRepo.getGroupMembers({
-      id,
-      page: currentPage,
-      per_page: pageSize,
-    });
+    let res;
+    if (name) {
+      res = await ctx.codeRepo.getGroupMembers({
+        id,
+        page: 1,
+        per_page: maxPageSize,
+      });
+      res = searchAndPage({
+        data: res.data,
+        currentPage,
+        pageSize,
+        search: name,
+        searchKey: 'username',
+      });
+    } else {
+      res = await ctx.codeRepo.getGroupMembers({
+        id,
+        page: currentPage,
+        per_page: pageSize,
+      });
+    }
 
     ctx.body = {
       count: res.total,
