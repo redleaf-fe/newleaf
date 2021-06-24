@@ -40,7 +40,7 @@ module.exports = {
     return res;
   },
 
-  async addUserIntoGroup({ id, user_id, access_level }) {
+  async addUserToGroup({ id, user_id, access_level }) {
     const res = await req({
       url: `groups/${id}/members`,
       method: 'post',
@@ -98,7 +98,7 @@ module.exports = {
     return res;
   },
 
-  async addUserIntoProject({ id, user_id, access_level }) {
+  async addUserToProject({ id, user_id, access_level }) {
     const res = await req({
       url: `projects/${id}/members`,
       method: 'post',

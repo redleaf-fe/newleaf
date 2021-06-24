@@ -88,7 +88,7 @@ router.post('/save', async (ctx) => {
       return;
     }
 
-    await ctx.codeRepo.addUserIntoGroup({
+    await ctx.codeRepo.addUserToGroup({
       id,
       user_id: res.gitUid,
       access_level: access || 30,
