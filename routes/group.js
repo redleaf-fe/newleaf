@@ -115,7 +115,7 @@ router.post('/save', async (ctx) => {
     // 创建
     const res = await ctx.codeRepo.createGroup({ name, description });
 
-    await ctx.codeRepo.addUserIntoGroup({
+    await ctx.codeRepo.addUserToGroup({
       id: res.data.id,
       user_id: ctx.gitUid,
       access_level: 40,
@@ -130,6 +130,55 @@ router.post('/save', async (ctx) => {
 
     ctx.body = { message: '创建成功' };
   }
+});
+
+// 分组中的应用操作
+router.get('/getAppInGroup', async (ctx) => {
+  const { id = '', currentPage, pageSize, name } = ctx.request.query;
+
+  if (!id) {
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const res = await ctx.codeRepo.getGroupProjects({
+    id,
+    search: name,
+    page: currentPage,
+    per_page: pageSize,
+  });
+  ctx.body = res.data;
+});
+
+router.post('/shareAppWithGroup', async (ctx) => {
+  const { id, group_id } = ctx.request.body;
+
+  if (!id || !group_id) {
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const res = await ctx.codeRepo.shareProjectWithGroup({
+    id,
+    group_id,
+    group_access: 40,
+  });
+  ctx.body = res.data;
+});
+
+router.post('/delShareAppWithGroup', async (ctx) => {
+  const { id, group_id } = ctx.request.body;
+
+  if (!id || !group_id) {
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const res = await ctx.codeRepo.delShareProjectWithGroup({
+    id,
+    group_id,
+  });
+  ctx.body = res.data;
 });
 
 module.exports = router.routes();
