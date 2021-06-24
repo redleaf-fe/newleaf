@@ -1,8 +1,9 @@
 const Router = require('koa-router');
 const Schema = require('validate');
 
-const { validate } = require('../utils');
 const { findRepeat } = require('../services');
+const { validate, searchAndPage } = require('../utils');
+const { maxPageSize } = require('../const');
 
 const router = new Router();
 
@@ -19,7 +20,6 @@ const schema = new Schema({
     },
   },
 });
-
 
 router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
@@ -115,7 +115,7 @@ router.post('/save', async (ctx) => {
     // 创建
     const res = await ctx.codeRepo.createProject({ name, description });
 
-    await ctx.codeRepo.addUserIntoProject({
+    await ctx.codeRepo.addUserToProject({
       id: res.data.id,
       user_id: ctx.gitUid,
       access_level: 40,
