@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 // app的发布数据
 module.exports = (conn) => {
   return conn.define(
-    'appPublish',
+    'publish',
     {
       branch: { type: DataTypes.STRING(200), allowNull: false },
       commitId: { type: DataTypes.STRING(200), allowNull: false },

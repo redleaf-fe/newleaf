@@ -4,6 +4,6 @@ module.exports = (conn) => {
     login: require('./login')(conn),
     group: require('./group')(conn),
     app: require('./app')(conn),
-    appPublish: require('./appPublish')(conn),
+    appPublish: require('./publish')(conn),
   };
 };
