@@ -58,7 +58,7 @@ router.get('/detail', async (ctx) => {
   const { id = '' } = ctx.request.query;
 
   const res = await ctx.conn.models.app.findOne({
-    attributes: ['appName', 'desc', 'git'],
+    attributes: ['name', 'desc', 'git'],
     where: { id },
   });
 
@@ -82,7 +82,7 @@ router.post('/save', async (ctx) => {
     if (res) {
       await ctx.conn.models.app.update(
         {
-          appName,
+          name: appName,
           desc,
           updater: ctx.uid,
           git,
