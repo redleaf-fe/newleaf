@@ -22,9 +22,9 @@ const schema = new Schema({
 });
 
 router.get('/list', async (ctx) => {
-  const { currentPage = 1, pageSize = 10, groupName } = ctx.request.query;
+  const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
   let res;
-  if (groupName) {
+  if (name) {
     res = await ctx.codeRepo.getUserGroups({
       id: ctx.gitUid,
       page: 1,
@@ -34,7 +34,7 @@ router.get('/list', async (ctx) => {
       data: res.data,
       currentPage,
       pageSize,
-      search: groupName,
+      search: name,
       searchKey: 'source_name',
     });
   } else {
@@ -87,7 +87,7 @@ router.post('/save', async (ctx) => {
 
     await ctx.conn.models.group.update(
       {
-        groupName: name,
+        name,
         creator: ctx.username,
         updater: ctx.username,
       },
@@ -104,9 +104,9 @@ router.post('/save', async (ctx) => {
       await findRepeat({
         ctx,
         modelName: 'group',
-        queryKey: ['groupName'],
-        queryObj: { groupName: name },
-        repeatMsg: '组名已被使用',
+        queryKey: ['name'],
+        queryObj: { name },
+        repeatMsg: '分组名称已被使用',
       })
     ) {
       return;
@@ -116,13 +116,13 @@ router.post('/save', async (ctx) => {
     const res = await ctx.codeRepo.createGroup({ name, description });
 
     await ctx.codeRepo.addUserIntoGroup({
-      group_id: res.data.id,
+      id: res.data.id,
       user_id: ctx.gitUid,
-      access_level: 50,
+      access_level: 40,
     });
 
     await ctx.conn.models.group.create({
-      groupName: name,
+      name,
       gitId: res.data.id,
       creator: ctx.username,
       updater: ctx.username,
