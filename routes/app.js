@@ -1,14 +1,13 @@
 const Router = require('koa-router');
 const Schema = require('validate');
-const { Op } = require('sequelize');
 
-const { idGenerate, createUniq } = require('../services');
 const { validate } = require('../utils');
+const { findRepeat } = require('../services');
 
 const router = new Router();
 
 const schema = new Schema({
-  appName: {
+  name: {
     type: String,
     required: true,
     length: { max: 20 },
@@ -21,121 +20,115 @@ const schema = new Schema({
   },
 });
 
+
 router.get('/list', async (ctx) => {
-  const appIds = await ctx.conn.models.userApp.findAll({
-    attributes: ['appId'],
-    where: { uid: ctx.uid },
-  });
-
-  if (appIds.length > 0) {
-    const { appName = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
-    const filter = {
-      [Op.and]: [
-        {
-          id: appIds.map((v) => v.appId),
-        },
-      ],
-    };
-
-    if (appName) {
-      filter[Op.and].push({ appName: { [Op.like]: `%${appName}%` } });
-    }
-    // 查找app表获取详情
-    const res = await ctx.conn.models.app.findAndCountAll({
-      attributes: ['appName', 'git', 'updatedAt', 'id'],
-      where: filter,
-      order: ['createdAt'],
-      offset: pageSize * (currentPage - 1),
-      limit: Number(pageSize),
+  const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
+  let res;
+  if (name) {
+    res = await ctx.codeRepo.getUserProjects({
+      id: ctx.gitUid,
+      page: 1,
+      per_page: maxPageSize,
     });
-    ctx.body = res;
+    res = searchAndPage({
+      data: res.data,
+      currentPage,
+      pageSize,
+      search: name,
+      searchKey: 'source_name',
+    });
   } else {
-    ctx.body = { rows: [], count: 0 };
+    res = await ctx.codeRepo.getUserProjects({
+      id: ctx.gitUid,
+      page: currentPage,
+      per_page: pageSize,
+    });
   }
+
+  await Promise.all(
+    res.data.map(async (v) => {
+      const res2 = await ctx.conn.models.app.findOne({
+        attributes: ['updater', 'updatedAt'],
+        where: { gitId: v.source_id },
+      });
+      v.updater = res2.updater;
+      v.updatedAt = res2.updatedAt;
+    })
+  );
+
+  ctx.body = {
+    count: res.total,
+    rows: res.data,
+  };
 });
 
 router.get('/detail', async (ctx) => {
   const { id = '' } = ctx.request.query;
 
-  const res = await ctx.conn.models.app.findOne({
-    attributes: ['appName', 'desc', 'git'],
-    where: { id },
-  });
+  if (!id) {
+    ctx.body = { message: 'id必填' };
+    return;
+  }
 
-  ctx.body = res || { message: '未找到应用' };
+  const res = await ctx.codeRepo.getProjectDetail({ id });
+  ctx.body = res.data;
 });
 
 router.post('/save', async (ctx) => {
-  const { appName, git, desc, id } = ctx.request.body;
+  const { name, description, id } = ctx.request.body;
 
-  if (!validate({ ctx, schema, obj: { appName } })) {
+  if (!validate({ ctx, schema, obj: { name } })) {
     return;
   }
 
   // 编辑
   if (id) {
-    const res = await ctx.conn.models.app.findOne({
-      attributes: ['id'],
-      where: { id },
-    });
+    await ctx.codeRepo.updateProject({ id, name, description });
 
-    if (res) {
-      await ctx.conn.models.app.update(
-        {
-          appName,
-          desc,
-          updater: ctx.uid,
-          git,
+    await ctx.conn.models.app.update(
+      {
+        name,
+        creator: ctx.username,
+        updater: ctx.username,
+      },
+      {
+        where: {
+          gitId: id,
         },
-        {
-          where: { id },
-        }
-      );
+      }
+    );
 
-      ctx.body = { message: '保存成功' };
-    } else {
-      ctx.status = 400;
-      ctx.body = { message: '未找到应用' };
-    }
+    ctx.body = { message: '保存成功' };
   } else {
-    // 创建
-    const appId = await idGenerate({
-      ctx,
-      modelName: 'app',
-      idName: 'id',
-    });
-
     if (
-      await createUniq({
+      await findRepeat({
         ctx,
         modelName: 'app',
-        queryKey: ['appName'],
-        queryObj: { appName },
-        repeatMsg: '应用名称已被使用',
-        createObj: {
-          appName,
-          id: appId,
-          desc,
-          creator: ctx.uid,
-          updater: ctx.uid,
-          git,
-        },
+        queryKey: ['name'],
+        queryObj: { name },
+        repeatMsg: '应用名已被使用',
       })
     ) {
-      const res = await ctx.conn.models.user.findOne({
-        attributes: ['username'],
-        where: { uid: ctx.uid },
-      });
-
-      await ctx.conn.models.userApp.create({
-        uid: ctx.uid,
-        username: res.username,
-        appId,
-        appName,
-        auth: 'admin',
-      });
-      ctx.body = { message: '创建成功' };
+      return;
     }
+
+    // 创建
+    const res = await ctx.codeRepo.createProject({ name, description });
+
+    await ctx.codeRepo.addUserIntoProject({
+      id: res.data.id,
+      user_id: ctx.gitUid,
+      access_level: 40,
+    });
+
+    await ctx.conn.models.app.create({
+      name,
+      gitId: res.data.id,
+      creator: ctx.username,
+      updater: ctx.username,
+    });
+
+    ctx.body = { message: '创建成功' };
   }
 });
 
