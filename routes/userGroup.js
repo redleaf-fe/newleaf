@@ -14,6 +14,8 @@ router.get('/list', async (ctx) => {
         page: 1,
         per_page: maxPageSize,
       });
+      // 过滤掉root
+      res.data = res.data.filter((v) => v.username !== 'root');
       res = searchAndPage({
         data: res.data,
         currentPage,
@@ -27,10 +29,12 @@ router.get('/list', async (ctx) => {
         page: currentPage,
         per_page: pageSize,
       });
+      // 过滤掉root
+      res.data = res.data.filter((v) => v.username !== 'root');
     }
 
     ctx.body = {
-      count: res.total,
+      count: res.total - 1,
       rows: res.data,
     };
   } else {
@@ -41,12 +45,12 @@ router.get('/list', async (ctx) => {
 async function hasAccess({ ctx, id, user_id }) {
   const res = await ctx.codeRepo.getUserOfGroup({ id, user_id });
 
-  if (res.access_level < 50) {
+  if (res.access_level < 40) {
     return false;
   }
 
   // 不能操作自己
-  if (ctx.gitUid === user_id) {
+  if (+ctx.gitUid === +user_id) {
     return false;
   }
 
@@ -54,15 +58,15 @@ async function hasAccess({ ctx, id, user_id }) {
 }
 
 router.post('/delete', async (ctx) => {
-  const { gitUid, groupId } = ctx.request.body;
+  const { gitUid, id } = ctx.request.body;
 
-  if (!(await hasAccess({ ctx, id: groupId, user_id: gitUid }))) {
+  if (!(await hasAccess({ ctx, id, user_id: gitUid }))) {
     ctx.body = { message: '没有操作权限' };
     return;
   }
 
   await ctx.codeRepo.removeUserFromGroup({
-    group_id: groupId,
+    id,
     user_id: gitUid,
   });
 
@@ -70,7 +74,7 @@ router.post('/delete', async (ctx) => {
 });
 
 router.post('/save', async (ctx) => {
-  const { uid, gitUid, groupId, access } = ctx.request.body;
+  const { uid, gitUid, id, access } = ctx.request.body;
 
   if (uid) {
     // 创建
@@ -79,26 +83,26 @@ router.post('/save', async (ctx) => {
       where: { uid },
     });
 
-    if (!(await hasAccess({ ctx, id: groupId, user_id: res.gitUid }))) {
+    if (!(await hasAccess({ ctx, id, user_id: res.gitUid }))) {
       ctx.body = { message: '没有操作权限' };
       return;
     }
 
     await ctx.codeRepo.addUserIntoGroup({
-      group_id: groupId,
+      id,
       user_id: res.gitUid,
       access_level: access || 30,
     });
     ctx.body = { message: '操作成功' };
   } else if (gitUid) {
-    if (!(await hasAccess({ ctx, id: groupId, user_id: gitUid }))) {
+    if (!(await hasAccess({ ctx, id, user_id: gitUid }))) {
       ctx.body = { message: '没有操作权限' };
       return;
     }
 
     // 编辑
     await ctx.codeRepo.editUserInGroup({
-      group_id: groupId,
+      id,
       user_id: gitUid,
       access_level: access || 30,
     });
