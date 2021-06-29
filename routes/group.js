@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 const Schema = require('validate');
 
-const { findRepeat } = require('../services');
+const { findRepeat, namespaceHasAccess } = require('../services');
 const { validate, searchAndPage } = require('../utils');
 const { maxPageSize } = require('../const');
 
@@ -134,20 +134,39 @@ router.post('/save', async (ctx) => {
 
 // 分组中的应用操作
 router.get('/getAppInGroup', async (ctx) => {
-  const { id = '', currentPage, pageSize, name } = ctx.request.query;
+  const { id = '', currentPage = 1, pageSize = 10, name } = ctx.request.query;
 
   if (!id) {
     ctx.body = { message: 'id必填' };
     return;
   }
 
-  const res = await ctx.codeRepo.getGroupProjects({
-    id,
-    search: name,
-    page: currentPage,
-    per_page: pageSize,
-  });
-  ctx.body = res.data;
+  let res;
+  if (name) {
+    res = await ctx.codeRepo.getGroupProjects({
+      id,
+      page: 1,
+      per_page: maxPageSize,
+    });
+    res = searchAndPage({
+      data: res.data,
+      currentPage,
+      pageSize,
+      search: name,
+      searchKey: 'name',
+    });
+  } else {
+    res = await ctx.codeRepo.getGroupProjects({
+      id,
+      page: currentPage,
+      per_page: pageSize,
+    });
+  }
+
+  ctx.body = {
+    count: res.total,
+    rows: res.data,
+  };
 });
 
 router.post('/shareAppWithGroup', async (ctx) => {
@@ -158,12 +177,12 @@ router.post('/shareAppWithGroup', async (ctx) => {
     return;
   }
 
-  const res = await ctx.codeRepo.shareProjectWithGroup({
+  await ctx.codeRepo.shareProjectWithGroup({
     id,
     group_id,
     group_access: 40,
   });
-  ctx.body = res.data;
+  ctx.body = { message: '操作成功' };
 });
 
 router.post('/delShareAppWithGroup', async (ctx) => {
@@ -174,11 +193,23 @@ router.post('/delShareAppWithGroup', async (ctx) => {
     return;
   }
 
-  const res = await ctx.codeRepo.delShareProjectWithGroup({
+  if (
+    !(await namespaceHasAccess({
+      ctx,
+      id: group_id,
+      user_id: ctx.gitUid,
+      type: 'group',
+    }))
+  ) {
+    ctx.body = { message: '没有操作权限' };
+    return;
+  }
+
+  await ctx.codeRepo.delShareProjectWithGroup({
     id,
     group_id,
   });
-  ctx.body = res.data;
+  ctx.body = { message: '操作成功' };
 });
 
 module.exports = router.routes();
