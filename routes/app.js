@@ -132,4 +132,26 @@ router.post('/save', async (ctx) => {
   }
 });
 
+router.get('/getByName', async (ctx) => {
+  const { name } = ctx.request.query;
+
+  if (name) {
+    let res = await ctx.codeRepo.getUserProjects({
+      id: ctx.gitUid,
+      page: 1,
+      per_page: maxPageSize,
+    });
+    res = searchAndPage({
+      data: res.data,
+      currentPage: 1,
+      pageSize: maxPageSize,
+      search: name,
+      searchKey: 'source_name',
+    });
+    ctx.body = res.data;
+  } else {
+    ctx.body = { message: 'name必填' };
+  }
+});
+
 module.exports = router.routes();
