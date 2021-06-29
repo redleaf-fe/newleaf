@@ -2,6 +2,7 @@ const Router = require('koa-router');
 const { Op } = require('sequelize');
 const { searchAndPage } = require('../utils');
 const { maxPageSize } = require('../const');
+const { namespaceHasAccess } = require('../services');
 
 const router = new Router();
 
@@ -20,27 +21,6 @@ router.get('/getByName', async (ctx) => {
   }
 });
 
-// 项目和分组操作
-async function hasAccess({ ctx, id, user_id, type }) {
-  const reqMap = {
-    group: ctx.codeRepo.getUserOfGroup,
-    app: ctx.codeRepo.getUserOfProject,
-  };
-
-  const res = await reqMap[type]({ id, user_id });
-
-  if (res.access_level < 40) {
-    return false;
-  }
-
-  // 不能操作自己
-  if (+ctx.gitUid === +user_id) {
-    return false;
-  }
-
-  return true;
-}
-
 router.post('/removeUserFromNamespace', async (ctx) => {
   const { gitUid, id, type } = ctx.request.body;
 
@@ -49,7 +29,7 @@ router.post('/removeUserFromNamespace', async (ctx) => {
     app: ctx.codeRepo.removeUserFromProject,
   };
 
-  if (!(await hasAccess({ ctx, id, user_id: gitUid, type }))) {
+  if (!(await namespaceHasAccess({ ctx, id, user_id: gitUid, type }))) {
     ctx.body = { message: '没有操作权限' };
     return;
   }
@@ -72,7 +52,7 @@ router.post('/saveUsersToNamespace', async (ctx) => {
       where: { uid },
     });
 
-    if (!(await hasAccess({ ctx, id, user_id: res.gitUid, type }))) {
+    if (!(await namespaceHasAccess({ ctx, id, user_id: res.gitUid, type }))) {
       ctx.body = { message: '没有操作权限' };
       return;
     }
@@ -89,7 +69,7 @@ router.post('/saveUsersToNamespace', async (ctx) => {
     });
     ctx.body = { message: '操作成功' };
   } else if (gitUid) {
-    if (!(await hasAccess({ ctx, id, user_id: gitUid, type }))) {
+    if (!(await namespaceHasAccess({ ctx, id, user_id: gitUid, type }))) {
       ctx.body = { message: '没有操作权限' };
       return;
     }
@@ -119,7 +99,7 @@ router.get('/getMembersInNamespace', async (ctx) => {
   const reqMap = {
     group: ctx.codeRepo.getGroupMembers,
     app: ctx.codeRepo.getProjectMembers,
-  }
+  };
 
   if (id) {
     let res;
@@ -156,6 +136,5 @@ router.get('/getMembersInNamespace', async (ctx) => {
     ctx.body = { message: 'id必填' };
   }
 });
-
 
 module.exports = router.routes();

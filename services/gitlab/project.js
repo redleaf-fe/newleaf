@@ -53,7 +53,7 @@ module.exports = {
     return res;
   },
 
-  async shareProjectWithGroup({ group_access, group_id }) {
+  async shareProjectWithGroup({ id, group_access, group_id }) {
     const res = await req({
       url: `/projects/${id}/share`,
       method: 'post',
