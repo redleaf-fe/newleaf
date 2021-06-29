@@ -9,13 +9,10 @@ module.exports = (conn) => {
       commitId: { type: DataTypes.STRING(200), allowNull: false },
       desc: DataTypes.STRING(100),
       name: { type: DataTypes.STRING(20), allowNull: false },
-      appId: DataTypes.STRING(20),
-      appName: DataTypes.STRING(20),
-      // 发布Id
-      id: { type: DataTypes.STRING(20), primaryKey: true, allowNull: false },
-      // 创建人、编辑人
+      appId: { type: DataTypes.STRING(20), allowNull: false },
+      appName: { type: DataTypes.STRING(20), allowNull: false },
+      // 创建人
       creator: { type: DataTypes.STRING(20), allowNull: false },
-      updater: { type: DataTypes.STRING(20), allowNull: false },
     },
     {
       // createdAt: false,
