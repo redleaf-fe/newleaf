@@ -17,14 +17,12 @@ module.exports = {
   },
 
   // group
-  async getUserGroups({ id, page, per_page }) {
+  async getUserGroups({ id }) {
     const res = await req({
       url: `users/${id}/memberships`,
       method: 'get',
       data: {
         type: 'Namespace',
-        page,
-        per_page,
       },
     });
 
@@ -75,14 +73,12 @@ module.exports = {
   },
 
   // project
-  async getUserProjects({ id, page, per_page }) {
+  async getUserProjects({ id }) {
     const res = await req({
       url: `users/${id}/memberships`,
       method: 'get',
       data: {
         type: 'Project',
-        page,
-        per_page,
       },
     });
 

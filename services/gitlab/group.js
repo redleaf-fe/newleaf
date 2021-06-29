@@ -40,27 +40,21 @@ module.exports = {
     return res;
   },
 
-  async getGroupMembers({ id, page, per_page }) {
+  async getGroupMembers({ id }) {
     const res = await req({
       url: `/groups/${id}/members`,
       method: 'get',
-      data: {
-        page,
-        per_page,
-      },
     });
 
     return res;
   },
 
-  async getGroupProjects({ id, page, per_page, order_by }) {
+  async getGroupProjects({ id, order_by }) {
     const res = await req({
       url: `/groups/${id}/projects`,
       method: 'get',
       data: {
         order_by: order_by || 'name',
-        page,
-        per_page,
       },
     });
 
