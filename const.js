@@ -1,3 +1,1 @@
-module.exports = {
-  maxPageSize: 1000000,
-};
+module.exports = {};
