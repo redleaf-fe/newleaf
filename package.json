@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node index.js",
+    "lint": "eslint routes/*.js services/*.js utils/*.js middlewares/*.js",
     "docs:dev": "docsify serve docs",
     "changelog": "conventional-changelog -i CHANGELOG.md -s -r 0",
     "pretty": "prettier --write middlewares/* models/* routes/* services/* utils/*"
@@ -24,6 +25,7 @@
   "devDependencies": {
     "conventional-changelog-cli": "^2.1.1",
     "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^7.29.0",
     "koa-logger": "^3.2.1",
     "prettier": "^2.2.1"
   },
