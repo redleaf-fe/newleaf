@@ -24,31 +24,6 @@ module.exports = {
     return id;
   },
 
-  async createUniq({
-    ctx,
-    modelName,
-    queryKey,
-    queryObj,
-    repeatMsg,
-    createObj,
-  }) {
-    // 查询重复的记录
-    const findRepeat = await ctx.conn.models[modelName].findOne({
-      attributes: queryKey,
-      where: queryObj,
-    });
-
-    if (findRepeat) {
-      ctx.status = 400;
-      ctx.body = { message: repeatMsg };
-      return false;
-    }
-
-    await ctx.conn.models[modelName].create(createObj);
-
-    return true;
-  },
-
   async findRepeat({ ctx, modelName, queryKey, queryObj, repeatMsg }) {
     // 查询重复的记录
     const findRepeat = await ctx.conn.models[modelName].findOne({
