@@ -40,19 +40,16 @@ module.exports = {
     return res;
   },
 
-  async getProjectMembers({ id, page, per_page }) {
+  async getProjectMembers({ id }) {
     const res = await req({
       url: `/projects/${id}/members`,
       method: 'get',
-      data: {
-        page,
-        per_page,
-      },
     });
 
     return res;
   },
 
+  // 分组
   async shareProjectWithGroup({ id, group_access, group_id }) {
     const res = await req({
       url: `/projects/${id}/share`,
@@ -70,6 +67,29 @@ module.exports = {
     const res = await req({
       url: `/projects/${id}/share/${group_id}`,
       method: 'delete',
+    });
+
+    return res;
+  },
+
+  // 分支
+  async getProjectBranch({ id }) {
+    const res = await req({
+      url: `/projects/${id}/repository/branches`,
+      method: 'get',
+    });
+
+    return res;
+  },
+
+  // 提交
+  async getBranchCommit({ id, ref_name }) {
+    const res = await req({
+      url: `projects/${id}/repository/commits`,
+      method: 'get',
+      data: {
+        ref_name,
+      },
     });
 
     return res;
