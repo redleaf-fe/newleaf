@@ -3,7 +3,6 @@ const Schema = require('validate');
 
 const { findRepeat } = require('../services');
 const { validate, searchAndPage } = require('../utils');
-const { maxPageSize } = require('../const');
 
 const router = new Router();
 
@@ -23,27 +22,19 @@ const schema = new Schema({
 
 router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
+
   let res;
+  res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
+  const param = {
+    data: res.data,
+    currentPage,
+    pageSize,
+  };
   if (name) {
-    res = await ctx.codeRepo.getUserProjects({
-      id: ctx.gitUid,
-      page: 1,
-      per_page: maxPageSize,
-    });
-    res = searchAndPage({
-      data: res.data,
-      currentPage,
-      pageSize,
-      search: name,
-      searchKey: 'source_name',
-    });
-  } else {
-    res = await ctx.codeRepo.getUserProjects({
-      id: ctx.gitUid,
-      page: currentPage,
-      per_page: pageSize,
-    });
+    param.search = name;
+    param.searchKey = 'source_name';
   }
+  res = searchAndPage(param);
 
   await Promise.all(
     res.data.map(async (v) => {
@@ -136,22 +127,16 @@ router.get('/getByName', async (ctx) => {
   const { name } = ctx.request.query;
 
   if (name) {
-    let res = await ctx.codeRepo.getUserProjects({
-      id: ctx.gitUid,
-      page: 1,
-      per_page: maxPageSize,
-    });
-    res = searchAndPage({
-      data: res.data,
-      currentPage: 1,
-      pageSize: maxPageSize,
-      search: name,
-      searchKey: 'source_name',
-    });
+    let res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
     ctx.body = res.data;
   } else {
     ctx.body = { message: 'name必填' };
   }
+});
+
+router.get('/all', async (ctx) => {
+  let res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
+  ctx.body = res.data;
 });
 
 module.exports = router.routes();
