@@ -1,7 +1,6 @@
 const Router = require('koa-router');
 const { Op } = require('sequelize');
 const { searchAndPage } = require('../utils');
-const { maxPageSize } = require('../const');
 const { namespaceHasAccess } = require('../services');
 
 const router = new Router();
@@ -103,30 +102,20 @@ router.get('/getMembersInNamespace', async (ctx) => {
 
   if (id) {
     let res;
+
+    res = await reqMap[type]({ id });
+    // 过滤掉root
+    res.data = res.data.filter((v) => v.username !== 'root');
+    const param = {
+      data: res.data,
+      currentPage,
+      pageSize,
+    };
     if (name) {
-      res = await reqMap[type]({
-        id,
-        page: 1,
-        per_page: maxPageSize,
-      });
-      // 过滤掉root
-      res.data = res.data.filter((v) => v.username !== 'root');
-      res = searchAndPage({
-        data: res.data,
-        currentPage,
-        pageSize,
-        search: name,
-        searchKey: 'username',
-      });
-    } else {
-      res = await reqMap[type]({
-        id,
-        page: currentPage,
-        per_page: pageSize,
-      });
-      // 过滤掉root
-      res.data = res.data.filter((v) => v.username !== 'root');
+      param.search = name;
+      param.searchKey = 'username';
     }
+    res = searchAndPage(param);
 
     ctx.body = {
       count: res.total - 1,
