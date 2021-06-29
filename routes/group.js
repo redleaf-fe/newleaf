@@ -3,7 +3,6 @@ const Schema = require('validate');
 
 const { findRepeat, namespaceHasAccess } = require('../services');
 const { validate, searchAndPage } = require('../utils');
-const { maxPageSize } = require('../const');
 
 const router = new Router();
 
@@ -23,27 +22,19 @@ const schema = new Schema({
 
 router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
+
   let res;
+  res = await ctx.codeRepo.getUserGroups({ id: ctx.gitUid });
+  const param = {
+    data: res.data,
+    currentPage,
+    pageSize,
+  };
   if (name) {
-    res = await ctx.codeRepo.getUserGroups({
-      id: ctx.gitUid,
-      page: 1,
-      per_page: maxPageSize,
-    });
-    res = searchAndPage({
-      data: res.data,
-      currentPage,
-      pageSize,
-      search: name,
-      searchKey: 'source_name',
-    });
-  } else {
-    res = await ctx.codeRepo.getUserGroups({
-      id: ctx.gitUid,
-      page: currentPage,
-      per_page: pageSize,
-    });
+    param.search = name;
+    param.searchKey = 'source_name';
   }
+  res = searchAndPage(param);
 
   await Promise.all(
     res.data.map(async (v) => {
@@ -142,26 +133,17 @@ router.get('/getAppInGroup', async (ctx) => {
   }
 
   let res;
+  res = await ctx.codeRepo.getGroupProjects({ id });
+  const param = {
+    data: res.data,
+    currentPage,
+    pageSize,
+  };
   if (name) {
-    res = await ctx.codeRepo.getGroupProjects({
-      id,
-      page: 1,
-      per_page: maxPageSize,
-    });
-    res = searchAndPage({
-      data: res.data,
-      currentPage,
-      pageSize,
-      search: name,
-      searchKey: 'name',
-    });
-  } else {
-    res = await ctx.codeRepo.getGroupProjects({
-      id,
-      page: currentPage,
-      per_page: pageSize,
-    });
+    param.search = name;
+    param.searchKey = 'name';
   }
+  res = searchAndPage(param);
 
   ctx.body = {
     count: res.total,
