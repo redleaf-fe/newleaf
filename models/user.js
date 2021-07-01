@@ -14,8 +14,6 @@ module.exports = (conn) => {
       gitUid: { type: DataTypes.STRING(20), allowNull: false },
     },
     {
-      createdAt: false,
-      updatedAt: false,
       charset: 'utf8',
     }
   );
