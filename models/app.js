@@ -13,10 +13,10 @@ module.exports = (conn) => {
       updater: { type: DataTypes.STRING(20), allowNull: false },
       // git地址，允许为空，部分应用不需要使用发布相关功能
       git: DataTypes.STRING(300),
+      // 审批原型Id
+      apId: { type: DataTypes.STRING(20), allowNull: false },
     },
     {
-      // createdAt: false,
-      // updatedAt: false,
       charset: 'utf8',
     }
   );
