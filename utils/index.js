@@ -20,7 +20,7 @@ module.exports = {
   },
   // 搜索分页
   searchAndPage({ data, currentPage, pageSize, search, searchKey }) {
-    const ret = data.filter((v) => v[searchKey].includes(search));
+    const ret = search ? data.filter((v) => v[searchKey].includes(search)) : data;
     return {
       data: _chunk(ret, pageSize)[currentPage - 1],
       total: ret.length,
