@@ -16,6 +16,7 @@ module.exports = (conn) => {
     {
       createdAt: false,
       updatedAt: false,
+      charset: 'utf8',
     }
   );
 };
