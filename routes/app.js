@@ -139,4 +139,16 @@ router.get('/all', async (ctx) => {
   ctx.body = res.data;
 });
 
+router.get('/branch', async (ctx) => {
+  const { id } = ctx.request.query;
+  let res = await ctx.codeRepo.getProjectBranch({ id });
+  ctx.body = res.data;
+});
+
+router.get('/commit', async (ctx) => {
+  const { id, refName } = ctx.request.query;
+  let res = await ctx.codeRepo.getBranchCommit({ id, ref_name: refName });
+  ctx.body = res.data;
+});
+
 module.exports = router.routes();
