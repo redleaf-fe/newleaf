@@ -19,9 +19,11 @@ const baseSchema = {
     type: String,
     required: true,
     length: { min: 4, max: 20 },
+    match: /^[a-zA-Z0-9_]+$/,
     message: {
       required: '用户名必填',
       length: '用户名需要4到20字符之间',
+      match: '只支持数字、英文、和_',
     },
   },
   password: {
@@ -44,7 +46,7 @@ const registerSchema = new Schema({
     required: true,
     length: { max: 100 },
     match:
-      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
     message: {
       required: '邮箱必填',
       match: '邮箱格式不正确',

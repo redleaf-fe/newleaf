@@ -10,14 +10,13 @@ const schema = new Schema({
   name: {
     type: String,
     required: true,
-    length: { max: 20 },
+    length: { max: 100 },
     message: {
       required: '发布名称必填',
-      length: '发布名称不大于20字符',
+      length: '发布名称不大于100字符',
     },
   },
   appId: {
-    type: String,
     required: true,
     length: { max: 20 },
     message: {
@@ -28,28 +27,28 @@ const schema = new Schema({
   appName: {
     type: String,
     required: true,
-    length: { max: 20 },
+    length: { max: 100 },
     message: {
       required: '应用名称必填',
-      length: '应用名称不大于20字符',
+      length: '应用名称不大于100字符',
     },
   },
   branch: {
     type: String,
     required: true,
-    length: { max: 200 },
+    length: { max: 100 },
     message: {
       required: '分支名必填',
-      length: '分支名不大于200字符',
+      length: '分支名不大于100字符',
     },
   },
   commitId: {
     type: String,
     required: true,
-    length: { max: 200 },
+    length: { max: 100 },
     message: {
       required: '提交Id必填',
-      length: '提交Id不大于200字符',
+      length: '提交Id不大于100字符',
     },
   },
 });
@@ -74,7 +73,7 @@ router.get('/list', async (ctx) => {
     filter[Op.and].push({ name: { [Op.like]: `%${name}%` } });
   }
 
-  const publish = await ctx.conn.models.appPublish.findAndCountAll({
+  const publish = await ctx.conn.models.publish.findAndCountAll({
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     where: filter,
@@ -111,7 +110,8 @@ router.post('/save', async (ctx) => {
     desc,
     branch,
     commitId,
-    creator: ctx.uid,
+    creatorId: ctx.uid,
+    creator: ctx.username,
   });
   ctx.body = { message: '创建成功' };
 });

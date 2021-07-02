@@ -10,12 +10,12 @@ const schema = new Schema({
   name: {
     type: String,
     required: true,
-    length: { max: 20 },
-    match: /^[a-zA-Z0-9-]+$/,
+    length: { min: 4, max: 100 },
+    match: /^[a-zA-Z0-9_]+$/,
     message: {
       required: '分组名称必填',
-      length: '分组名称不大于20字符',
-      match: '分组名称只支持数字、英文、和-',
+      length: '分组名称不大于100字符',
+      match: '分组名称只支持数字、英文、和_',
     },
   },
 });
