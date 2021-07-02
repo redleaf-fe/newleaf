@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 // 记录用户需要审批的实例
 module.exports = (conn) => {
   return conn.define(
-    'user',
+    'userApprove',
     {
       // 用户Id
       uid: { type: DataTypes.STRING(20), primaryKey: true },

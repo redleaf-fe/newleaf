@@ -9,6 +9,7 @@ module.exports = (conn) => {
       /*
         n: xxx 审批人姓名
         i: yyy 审批人uid
+        [[{ n:xxx, i:yyy }, ...], [...]]
        */
       stage: {
         type: DataTypes.STRING(10000),
