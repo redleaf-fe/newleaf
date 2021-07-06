@@ -23,7 +23,7 @@ module.exports = {
     const ret = search ? data.filter((v) => v[searchKey].includes(search)) : data;
     return {
       data: _chunk(ret, pageSize)[currentPage - 1],
-      total: ret.length,
+      total: ret ? ret.length : 0,
     };
   },
 };

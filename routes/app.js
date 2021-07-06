@@ -37,7 +37,7 @@ router.get('/list', async (ctx) => {
   res = searchAndPage(param);
 
   await Promise.all(
-    res.data.map(async (v) => {
+    (res.data || []).map(async (v) => {
       const res2 = await ctx.conn.models.app.findOne({
         attributes: ['updater', 'updatedAt'],
         where: { gitId: v.source_id },
@@ -49,7 +49,7 @@ router.get('/list', async (ctx) => {
 
   ctx.body = {
     count: res.total,
-    rows: res.data,
+    rows: res.data || [],
   };
 });
 
