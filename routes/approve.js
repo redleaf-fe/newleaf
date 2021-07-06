@@ -80,4 +80,31 @@ router.post('/saveProto', async (ctx) => {
 });
 
 
+// 查询
+router.get('/getProto', async (ctx) => {
+  const { businessId, type } = ctx.request.query;
+
+  if (!businessId || !type) {
+    ctx.body = { message: '业务参数必填' };
+    return;
+  }
+
+  const businessMap = {
+    app: {
+      model: ctx.conn.models.app,
+      filter: { gitId: businessId },
+    },
+  };
+
+  const res = await businessMap[type].model.findOne({
+    where: businessMap[type].filter,
+  });
+
+  const res2 = await ctx.conn.models.approveProto.findOne({
+    where: { id: res.id },
+  });
+
+  ctx.body = res2;
+});
+
 module.exports = router.routes();
