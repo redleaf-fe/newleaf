@@ -49,29 +49,6 @@ module.exports = {
     return res;
   },
 
-  // 分组
-  async shareProjectWithGroup({ id, group_access, group_id }) {
-    const res = await req({
-      url: `/projects/${id}/share`,
-      method: 'post',
-      data: {
-        group_access,
-        group_id,
-      },
-    });
-
-    return res;
-  },
-
-  async delShareProjectWithGroup({ id, group_id }) {
-    const res = await req({
-      url: `/projects/${id}/share/${group_id}`,
-      method: 'delete',
-    });
-
-    return res;
-  },
-
   // 分支
   async getProjectBranch({ id }) {
     const res = await req({
