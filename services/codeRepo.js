@@ -1,9 +1,7 @@
 const gitlab = require('./gitlab');
-const gogs = require('./gogs');
 
 const repoMap = {
   gitlab: gitlab,
-  gogs: gogs,
 };
 
 class CodeRepo {
