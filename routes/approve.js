@@ -13,7 +13,6 @@ router.post('/saveProto', async (ctx) => {
       ctx,
       id: businessId,
       user_id: ctx.gitUid,
-      type,
     }))
   ) {
     ctx.body = { message: '没有操作权限' };

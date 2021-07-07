@@ -22,9 +22,6 @@ module.exports = {
     const res = await req({
       url: `users/${id}/projects`,
       method: 'get',
-      data: {
-        type: 'Project',
-      },
     });
 
     return res;

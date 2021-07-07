@@ -21,14 +21,13 @@ router.get('/getByName', async (ctx) => {
 });
 
 router.post('/removeUserFromApp', async (ctx) => {
-  const { gitUid, id, type } = ctx.request.body;
+  const { gitUid, id } = ctx.request.body;
 
   if (
     !(await hasAppAccess({
       ctx,
       id,
       user_id: gitUid,
-      type,
       validateSelf: true,
     }))
   ) {
@@ -45,7 +44,7 @@ router.post('/removeUserFromApp', async (ctx) => {
 });
 
 router.post('/saveUserToApp', async (ctx) => {
-  const { uid, gitUid, id, access, type } = ctx.request.body;
+  const { uid, gitUid, id, access } = ctx.request.body;
 
   if (uid) {
     // 创建
@@ -59,7 +58,6 @@ router.post('/saveUserToApp', async (ctx) => {
         ctx,
         id,
         user_id: res.gitUid,
-        type,
         validateSelf: true,
       }))
     ) {
@@ -79,7 +77,6 @@ router.post('/saveUserToApp', async (ctx) => {
         ctx,
         id,
         user_id: gitUid,
-        type,
         validateSelf: true,
       }))
     ) {
@@ -101,7 +98,7 @@ router.post('/saveUserToApp', async (ctx) => {
 });
 
 // 成员列表
-router.get('/getMembers', async (ctx) => {
+router.get('/getMembersInApp', async (ctx) => {
   const { id, name, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   if (id) {
