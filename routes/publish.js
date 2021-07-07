@@ -94,15 +94,32 @@ router.get('/approve', async (ctx) => {
 
 router.post('/save', async (ctx) => {
   const { name, appId, appName, desc, branch, commitId } = ctx.request.body;
-
+  // 允许发布同名
   if (
     !validate({ ctx, schema, obj: { name, appId, appName, branch, commitId } })
   ) {
     return;
   }
 
-  // 允许发布同名
+  const res = await ctx.conn.models.app.findOne({
+    where: { gitId: appId },
+  });
 
+  if (!res.apId) {
+    ctx.body = { message: '获取应用审核环节失败' };
+    return;
+  }
+  // 创建审批实例
+  const res2 = await ctx.conn.models.approveIns.create({
+    stageId: 0,
+    status: 'pending',
+    apId: res.apId,
+  });
+
+  if (!res2.id) {
+    ctx.body = { message: '创建审核实例失败' };
+    return;
+  }
   await ctx.conn.models.publish.create({
     name,
     appId,
@@ -112,6 +129,8 @@ router.post('/save', async (ctx) => {
     commitId,
     creatorId: ctx.uid,
     creator: ctx.username,
+    env: 'daily',
+    aId: res2.id,
   });
   ctx.body = { message: '创建成功' };
 });
