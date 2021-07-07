@@ -10,6 +10,7 @@ module.exports = {
         name: username,
         email,
         password,
+        skip_confirmation: true,
       },
     });
 
