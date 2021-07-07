@@ -1,12 +1,24 @@
 const Router = require('koa-router');
 
-const { findRepeat, namespaceHasAccess } = require('../services');
+const { namespaceHasAccess } = require('../services');
 
 const router = new Router();
 
 // 创建/编辑原型
 router.post('/saveProto', async (ctx) => {
   const { stage, id, businessId, type } = ctx.request.body;
+
+  if (
+    !(await namespaceHasAccess({
+      ctx,
+      id: businessId,
+      user_id: ctx.gitUid,
+      type,
+    }))
+  ) {
+    ctx.body = { message: '没有操作权限' };
+    return;
+  }
 
   if (!businessId || !type) {
     ctx.body = { message: '业务参数必填' };
@@ -66,6 +78,15 @@ router.post('/saveProto', async (ctx) => {
       stage: JSON.stringify(stage),
     });
 
+    const res2 = await businessMap[type].model.findOne({
+      where: businessMap[type].filter,
+    });
+    
+    if (res2.apId) {
+      ctx.body = { message: '业务对象上已绑定原型' };
+      return;
+    }
+
     await businessMap[type].model.update(
       {
         apId: res.id,
@@ -79,7 +100,6 @@ router.post('/saveProto', async (ctx) => {
   }
 });
 
-
 // 查询
 router.get('/getProto', async (ctx) => {
   const { businessId, type } = ctx.request.query;
@@ -92,16 +112,23 @@ router.get('/getProto', async (ctx) => {
   const businessMap = {
     app: {
       model: ctx.conn.models.app,
-      filter: { gitId: businessId },
+      idKey: 'gitId',
     },
   };
 
   const res = await businessMap[type].model.findOne({
-    where: businessMap[type].filter,
+    where: {
+      [businessMap[type].idKey]: businessId,
+    },
   });
 
+  if (!res) {
+    ctx.body = { message: '未找到关联的业务对象' };
+    return;
+  }
+
   const res2 = await ctx.conn.models.approveProto.findOne({
-    where: { id: res.id },
+    where: { id: res.apId },
   });
 
   ctx.body = res2;
