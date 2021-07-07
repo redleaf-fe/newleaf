@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 const { Op } = require('sequelize');
 const { searchAndPage } = require('../utils');
-const { namespaceHasAccess } = require('../services');
+const { hasAppAccess } = require('../services');
 
 const router = new Router();
 
@@ -20,16 +20,11 @@ router.get('/getByName', async (ctx) => {
   }
 });
 
-router.post('/removeUserFromNamespace', async (ctx) => {
+router.post('/removeUserFromApp', async (ctx) => {
   const { gitUid, id, type } = ctx.request.body;
 
-  const reqMap = {
-    group: ctx.codeRepo.removeUserFromGroup,
-    app: ctx.codeRepo.removeUserFromProject,
-  };
-
   if (
-    !(await namespaceHasAccess({
+    !(await hasAppAccess({
       ctx,
       id,
       user_id: gitUid,
@@ -41,7 +36,7 @@ router.post('/removeUserFromNamespace', async (ctx) => {
     return;
   }
 
-  await reqMap[type]({
+  await ctx.codeRepo.removeUserFromProject({
     id,
     user_id: gitUid,
   });
@@ -49,7 +44,7 @@ router.post('/removeUserFromNamespace', async (ctx) => {
   ctx.body = { message: '删除成功' };
 });
 
-router.post('/saveUserToNamespace', async (ctx) => {
+router.post('/saveUserToApp', async (ctx) => {
   const { uid, gitUid, id, access, type } = ctx.request.body;
 
   if (uid) {
@@ -60,7 +55,7 @@ router.post('/saveUserToNamespace', async (ctx) => {
     });
 
     if (
-      !(await namespaceHasAccess({
+      !(await hasAppAccess({
         ctx,
         id,
         user_id: res.gitUid,
@@ -72,12 +67,7 @@ router.post('/saveUserToNamespace', async (ctx) => {
       return;
     }
 
-    const reqMap = {
-      group: ctx.codeRepo.addUserToGroup,
-      app: ctx.codeRepo.addUserToProject,
-    };
-
-    await reqMap[type]({
+    await ctx.codeRepo.addUserToProject({
       id,
       user_id: res.gitUid,
       access_level: access || 30,
@@ -85,7 +75,7 @@ router.post('/saveUserToNamespace', async (ctx) => {
     ctx.body = { message: '操作成功' };
   } else if (gitUid) {
     if (
-      !(await namespaceHasAccess({
+      !(await hasAppAccess({
         ctx,
         id,
         user_id: gitUid,
@@ -97,13 +87,8 @@ router.post('/saveUserToNamespace', async (ctx) => {
       return;
     }
 
-    const reqMap = {
-      group: ctx.codeRepo.editUserInGroup,
-      app: ctx.codeRepo.editUserInProject,
-    };
-
     // 编辑
-    await reqMap[type]({
+    await ctx.codeRepo.editUserInProject({
       id,
       user_id: gitUid,
       access_level: access || 30,
@@ -115,19 +100,14 @@ router.post('/saveUserToNamespace', async (ctx) => {
   }
 });
 
-// 分组中的成员列表
-router.get('/getMembersInNamespace', async (ctx) => {
-  const { id, name, currentPage = 1, pageSize = 10, type } = ctx.request.query;
-
-  const reqMap = {
-    group: ctx.codeRepo.getGroupMembers,
-    app: ctx.codeRepo.getProjectMembers,
-  };
+// 成员列表
+router.get('/getMembers', async (ctx) => {
+  const { id, name, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   if (id) {
     let res;
 
-    res = await reqMap[type]({ id });
+    res = await ctx.codeRepo.getProjectMembers({ id });
     // 过滤掉root
     res.data = res.data.filter((v) => v.username !== 'root');
     const param = {

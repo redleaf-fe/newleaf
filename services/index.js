@@ -40,14 +40,11 @@ module.exports = {
     return false;
   },
 
-  async namespaceHasAccess({ ctx, id, user_id, type, validateSelf = false }) {
-    // 项目和分组操作是否有权限
-    const reqMap = {
-      group: ctx.codeRepo.getUserOfGroup,
-      app: ctx.codeRepo.getUserOfProject,
-    };
-
-    const res = await reqMap[type]({ id, user_id: ctx.gitUid });
+  async hasAppAccess({ ctx, id, user_id, validateSelf = false }) {
+    const res = await ctx.codeRepo.getUserOfProject({
+      id,
+      user_id: ctx.gitUid,
+    });
 
     if (res.data.access_level < 40) {
       return false;

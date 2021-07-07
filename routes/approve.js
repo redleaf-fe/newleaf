@@ -1,6 +1,6 @@
 const Router = require('koa-router');
 
-const { namespaceHasAccess } = require('../services');
+const { hasAppAccess } = require('../services');
 
 const router = new Router();
 
@@ -9,7 +9,7 @@ router.post('/saveProto', async (ctx) => {
   const { stage, id, businessId, type } = ctx.request.body;
 
   if (
-    !(await namespaceHasAccess({
+    !(await hasAppAccess({
       ctx,
       id: businessId,
       user_id: ctx.gitUid,
@@ -122,7 +122,7 @@ router.get('/getProto', async (ctx) => {
     },
   });
 
-  if (!res) {
+  if (!res.apId) {
     ctx.body = { message: '未找到关联的业务对象' };
     return;
   }
