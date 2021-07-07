@@ -28,7 +28,15 @@ router.post('/removeUserFromNamespace', async (ctx) => {
     app: ctx.codeRepo.removeUserFromProject,
   };
 
-  if (!(await namespaceHasAccess({ ctx, id, user_id: gitUid, type }))) {
+  if (
+    !(await namespaceHasAccess({
+      ctx,
+      id,
+      user_id: gitUid,
+      type,
+      validateSelf: true,
+    }))
+  ) {
     ctx.body = { message: '没有操作权限' };
     return;
   }
@@ -41,7 +49,7 @@ router.post('/removeUserFromNamespace', async (ctx) => {
   ctx.body = { message: '删除成功' };
 });
 
-router.post('/saveUsersToNamespace', async (ctx) => {
+router.post('/saveUserToNamespace', async (ctx) => {
   const { uid, gitUid, id, access, type } = ctx.request.body;
 
   if (uid) {
@@ -51,7 +59,15 @@ router.post('/saveUsersToNamespace', async (ctx) => {
       where: { uid },
     });
 
-    if (!(await namespaceHasAccess({ ctx, id, user_id: res.gitUid, type }))) {
+    if (
+      !(await namespaceHasAccess({
+        ctx,
+        id,
+        user_id: res.gitUid,
+        type,
+        validateSelf: true,
+      }))
+    ) {
       ctx.body = { message: '没有操作权限' };
       return;
     }
@@ -68,7 +84,15 @@ router.post('/saveUsersToNamespace', async (ctx) => {
     });
     ctx.body = { message: '操作成功' };
   } else if (gitUid) {
-    if (!(await namespaceHasAccess({ ctx, id, user_id: gitUid, type }))) {
+    if (
+      !(await namespaceHasAccess({
+        ctx,
+        id,
+        user_id: gitUid,
+        type,
+        validateSelf: true,
+      }))
+    ) {
       ctx.body = { message: '没有操作权限' };
       return;
     }

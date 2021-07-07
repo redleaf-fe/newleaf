@@ -6,13 +6,13 @@ module.exports = {
   Database: require('./database'),
   CodeRepo: require('./codeRepo'),
 
-  async idGenerate ({ ctx, modelName, idName }) {
+  async idGenerate({ ctx, modelName, idName }) {
     let id = nanoid();
     let res = await ctx.conn.models[modelName].findOne({
       attributes: [idName],
       where: { [idName]: id },
     });
-  
+
     while (res) {
       id = nanoid();
       res = await ctx.conn.models[modelName].findOne({
@@ -20,7 +20,7 @@ module.exports = {
         where: { [idName]: id },
       });
     }
-  
+
     return id;
   },
 
@@ -40,7 +40,7 @@ module.exports = {
     return false;
   },
 
-  async namespaceHasAccess({ ctx, id, user_id, type }) {
+  async namespaceHasAccess({ ctx, id, user_id, type, validateSelf = false }) {
     // 项目和分组操作是否有权限
     const reqMap = {
       group: ctx.codeRepo.getUserOfGroup,
@@ -54,7 +54,7 @@ module.exports = {
     }
 
     // 不能操作自己
-    if (+ctx.gitUid === +user_id) {
+    if (validateSelf && +ctx.gitUid === +user_id) {
       return false;
     }
 
