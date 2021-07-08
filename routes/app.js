@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const Schema = require('validate');
+const { Op } = require('sequelize');
 
 const { findRepeat } = require('../services');
 const { validate, searchAndPage } = require('../utils');
@@ -20,37 +21,41 @@ const schema = new Schema({
   },
 });
 
+// function getUserProjects(){
+
+// }
+
 router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
 
-  let res;
-  res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
-  const param = {
-    data: res.data,
-    currentPage,
-    pageSize,
+  const filter = {
+    [Op.and]: [],
   };
-  if (name) {
-    param.search = name;
-    param.searchKey = 'source_name';
-  }
-  res = searchAndPage(param);
 
+  if (name) {
+    filter[Op.and].push({ name: { [Op.like]: `%${name}%` } });
+  }
+
+  const res = await ctx.conn.models.userApp.findAndCountAll({
+    offset: pageSize * (currentPage - 1),
+    limit: Number(pageSize),
+    where: filter,
+    order: ['createdAt'],
+  });
+
+  const ret = JSON.parse(JSON.stringify(res));
   await Promise.all(
-    (res.data || []).map(async (v) => {
+    (ret.rows || []).map(async (v) => {
       const res2 = await ctx.conn.models.app.findOne({
         attributes: ['updater', 'updatedAt'],
-        where: { gitId: v.source_id },
+        where: { gitId: v.appId },
       });
       v.updater = res2.updater;
       v.updatedAt = res2.updatedAt;
     })
   );
 
-  ctx.body = {
-    count: res.total,
-    rows: res.data || [],
-  };
+  ctx.body = ret;
 });
 
 router.get('/detail', async (ctx) => {
@@ -110,6 +115,14 @@ router.post('/save', async (ctx) => {
       id: res.data.id,
       user_id: ctx.gitUid,
       access_level: 40,
+    });
+
+    await ctx.conn.models.userApp.create({
+      uid: ctx.gitUid,
+      username: ctx.username,
+      appName: name,
+      appId: res.data.id,
+      auth: 40,
     });
 
     await ctx.conn.models.app.create({
