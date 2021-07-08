@@ -6,6 +6,7 @@ module.exports = (conn) => {
     publish: require('./publish')(conn),
     approveProto: require('./approveProto')(conn),
     approveIns: require('./approveIns')(conn),
+    userApp: require('./userApp')(conn),
     userApprove: require('./userApprove')(conn),
   };
 };
