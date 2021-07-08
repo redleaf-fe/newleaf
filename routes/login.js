@@ -189,6 +189,7 @@ router.post('/register', async (ctx) => {
     ctx.status = 302;
     ctx.body = { redirectUrl: '/dashboard' };
   } else {
+    ctx.status = 400;
     ctx.body = { message: res.response.data.message };
   }
 });

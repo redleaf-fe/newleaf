@@ -16,6 +16,7 @@ router.get('/getByName', async (ctx) => {
     });
     ctx.body = res;
   } else {
+    ctx.status = 400;
     ctx.body = { message: 'username必填' };
   }
 });
@@ -31,6 +32,7 @@ router.post('/removeUserFromApp', async (ctx) => {
       validateSelf: true,
     }))
   ) {
+    ctx.status = 400;
     ctx.body = { message: '没有操作权限' };
     return;
   }
@@ -68,6 +70,7 @@ router.post('/saveUserToApp', async (ctx) => {
         validateSelf: true,
       }))
     ) {
+      ctx.status = 400;
       ctx.body = { message: '没有操作权限' };
       return;
     }
@@ -96,6 +99,7 @@ router.post('/saveUserToApp', async (ctx) => {
         validateSelf: true,
       }))
     ) {
+      ctx.status = 400;
       ctx.body = { message: '没有操作权限' };
       return;
     }
@@ -121,6 +125,7 @@ router.post('/saveUserToApp', async (ctx) => {
 
     ctx.body = { message: '操作成功' };
   } else {
+    ctx.status = 400;
     ctx.body = { message: '用户id必填' };
   }
 });
@@ -151,6 +156,7 @@ router.get('/getMembersInApp', async (ctx) => {
       rows: res.data,
     };
   } else {
+    ctx.status = 400;
     ctx.body = { message: 'id必填' };
   }
 });

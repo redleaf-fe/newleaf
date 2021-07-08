@@ -8,6 +8,7 @@ router.get('/get', async (ctx) => {
   const { appId } = ctx.request.query;
 
   if (!appId) {
+    ctx.status = 400;
     ctx.body = { message: '应用id必填' };
     return;
   }

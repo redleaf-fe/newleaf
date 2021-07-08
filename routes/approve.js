@@ -15,11 +15,13 @@ router.post('/saveProto', async (ctx) => {
       user_id: ctx.gitUid,
     }))
   ) {
+    ctx.status = 400;
     ctx.body = { message: '没有操作权限' };
     return;
   }
 
   if (!businessId || !type) {
+    ctx.status = 400;
     ctx.body = { message: '业务参数必填' };
     return;
   }
@@ -32,27 +34,33 @@ router.post('/saveProto', async (ctx) => {
   };
 
   if (!Array.isArray(stage)) {
+    ctx.status = 400;
     ctx.body = { message: '格式不正确' };
     return;
   }
   if (stage.some((v) => !Array.isArray(v))) {
+    ctx.status = 400;
     ctx.body = { message: '格式不正确' };
     return;
   }
 
   const stageArr = stage;
   if (stageArr.length < 2) {
+    ctx.status = 400;
     ctx.body = { message: '审批环节最少2个' };
     return;
   } else if (stageArr.length > 10) {
+    ctx.status = 400;
     ctx.body = { message: '审批环节最多10个' };
     return;
   }
 
   if (stageArr.some((v) => v.length < 1)) {
+    ctx.status = 400;
     ctx.body = { message: '每个环节最少1个审批人' };
     return;
   } else if (stageArr.some((v) => v.length > 5)) {
+    ctx.status = 400;
     ctx.body = { message: '每个环节最多5个审批人' };
     return;
   }
@@ -80,8 +88,9 @@ router.post('/saveProto', async (ctx) => {
     const res2 = await businessMap[type].model.findOne({
       where: businessMap[type].filter,
     });
-    
+
     if (res2.apId) {
+      ctx.status = 400;
       ctx.body = { message: '业务对象上已绑定原型' };
       return;
     }
@@ -104,6 +113,7 @@ router.get('/getProto', async (ctx) => {
   const { businessId, type } = ctx.request.query;
 
   if (!businessId || !type) {
+    ctx.status = 400;
     ctx.body = { message: '业务参数必填' };
     return;
   }
@@ -122,6 +132,7 @@ router.get('/getProto', async (ctx) => {
   });
 
   if (!res.apId) {
+    ctx.status = 400;
     ctx.body = { message: '未找到关联的业务对象' };
     return;
   }
