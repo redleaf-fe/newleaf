@@ -3,7 +3,7 @@ const Schema = require('validate');
 const { Op } = require('sequelize');
 
 const { findRepeat } = require('../services');
-const { validate, searchAndPage } = require('../utils');
+const { validate } = require('../utils');
 
 const router = new Router();
 
@@ -21,9 +21,24 @@ const schema = new Schema({
   },
 });
 
-// function getUserProjects(){
+async function getUserProjects({ ctx, name }) {
+  const filter = {
+    [Op.and]: [
+      {
+        gitUid: ctx.gitUid,
+      },
+    ],
+  };
 
-// }
+  if (name) {
+    filter[Op.and].push({ appName: { [Op.like]: `%${name}%` } });
+  }
+
+  return await ctx.conn.models.userApp.findAndCountAll({
+    where: filter,
+    order: ['appName'],
+  });
+}
 
 router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
@@ -31,8 +46,8 @@ router.get('/list', async (ctx) => {
   const filter = {
     [Op.and]: [
       {
-        gitUid: ctx.gitUid
-      }
+        gitUid: ctx.gitUid,
+      },
     ],
   };
 
@@ -66,6 +81,7 @@ router.get('/detail', async (ctx) => {
   const { id = '' } = ctx.request.query;
 
   if (!id) {
+    ctx.status = 400;
     ctx.body = { message: 'id必填' };
     return;
   }
@@ -144,16 +160,17 @@ router.get('/getByName', async (ctx) => {
   const { name } = ctx.request.query;
 
   if (name) {
-    let res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
-    ctx.body = res.data;
+    let res = await getUserProjects({ ctx, name });
+    ctx.body = res.rows;
   } else {
+    ctx.status = 400;
     ctx.body = { message: 'name必填' };
   }
 });
 
 router.get('/all', async (ctx) => {
-  let res = await ctx.codeRepo.getUserProjects({ id: ctx.gitUid });
-  ctx.body = res.data;
+  let res = await getUserProjects({ ctx });
+  ctx.body = res.rows;
 });
 
 router.get('/branch', async (ctx) => {
