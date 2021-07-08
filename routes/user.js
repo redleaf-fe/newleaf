@@ -40,16 +40,23 @@ router.post('/removeUserFromApp', async (ctx) => {
     user_id: gitUid,
   });
 
+  await ctx.conn.models.userApp.destroy({
+    where: {
+      gitUid,
+      appId: id,
+    },
+  });
+
   ctx.body = { message: '删除成功' };
 });
 
 router.post('/saveUserToApp', async (ctx) => {
-  const { uid, gitUid, id, access } = ctx.request.body;
+  const { uid, gitUid, name, id, access } = ctx.request.body;
 
   if (uid) {
     // 创建
     const res = await ctx.conn.models.user.findOne({
-      attributes: ['gitUid'],
+      attributes: ['gitUid', 'username'],
       where: { uid },
     });
 
@@ -70,6 +77,15 @@ router.post('/saveUserToApp', async (ctx) => {
       user_id: res.gitUid,
       access_level: access || 30,
     });
+
+    await ctx.conn.models.userApp.create({
+      gitUid: res.gitUid,
+      username: res.username,
+      appName: name,
+      appId: id,
+      auth: 30,
+    });
+
     ctx.body = { message: '操作成功' };
   } else if (gitUid) {
     if (
@@ -90,6 +106,18 @@ router.post('/saveUserToApp', async (ctx) => {
       user_id: gitUid,
       access_level: access || 30,
     });
+
+    await ctx.conn.models.userApp.update(
+      {
+        auth: access || 30,
+      },
+      {
+        where: {
+          gitUid,
+          appId: id,
+        },
+      }
+    );
 
     ctx.body = { message: '操作成功' };
   } else {
@@ -119,7 +147,7 @@ router.get('/getMembersInApp', async (ctx) => {
     res = searchAndPage(param);
 
     ctx.body = {
-      count: res.total - 1,
+      count: res.total,
       rows: res.data,
     };
   } else {

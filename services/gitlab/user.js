@@ -18,14 +18,16 @@ module.exports = {
   },
 
   // project
-  async getUserProjects({ id }) {
-    const res = await req({
-      url: `users/${id}/projects`,
-      method: 'get',
-    });
 
-    return res;
-  },
+  // 老版本只能获取到用户创建的应用，不能获取到用户参与的应用
+  // async getUserProjects({ id }) {
+  //   const res = await req({
+  //     url: `users/${id}/projects`,
+  //     method: 'get',
+  //   });
+
+  //   return res;
+  // },
 
   async getUserOfProject({ id, user_id }) {
     const res = await req({

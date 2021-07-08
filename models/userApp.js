@@ -6,7 +6,7 @@ module.exports = (conn) => {
     'userApp',
     {
       // 用户Id
-      uid: { type: DataTypes.STRING(20), allowNull: false },
+      gitUid: { type: DataTypes.STRING(20), allowNull: false },
       // 用户名
       username: { type: DataTypes.STRING(20), allowNull: false },
       // 应用名称

@@ -6,7 +6,7 @@ module.exports = (conn) => {
     'userApprove',
     {
       // 用户Id
-      uid: { type: DataTypes.STRING(20), primaryKey: true },
+      gitUid: { type: DataTypes.STRING(20), primaryKey: true },
       // 审批实例Id
       aId: { type: DataTypes.STRING(20), allowNull: false },
       // 审批类型

@@ -29,11 +29,15 @@ router.get('/list', async (ctx) => {
   const { currentPage = 1, pageSize = 10, name } = ctx.request.query;
 
   const filter = {
-    [Op.and]: [],
+    [Op.and]: [
+      {
+        gitUid: ctx.gitUid
+      }
+    ],
   };
 
   if (name) {
-    filter[Op.and].push({ name: { [Op.like]: `%${name}%` } });
+    filter[Op.and].push({ appName: { [Op.like]: `%${name}%` } });
   }
 
   const res = await ctx.conn.models.userApp.findAndCountAll({
@@ -118,7 +122,7 @@ router.post('/save', async (ctx) => {
     });
 
     await ctx.conn.models.userApp.create({
-      uid: ctx.gitUid,
+      gitUid: ctx.gitUid,
       username: ctx.username,
       appName: name,
       appId: res.data.id,
