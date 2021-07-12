@@ -14,11 +14,19 @@ module.exports = (conn) => {
       status: {
         type: DataTypes.ENUM('pending', 'doing', 'done', 'fail'),
         allowNull: false,
+        defaultValue: 'pending',
+      },
+      // 状态，发布中、发布结束
+      buildStatus: {
+        type: DataTypes.ENUM('pending', 'doing', 'done', 'fail'),
+        allowNull: false,
+        defaultValue: 'pending',
       },
       // 发布环境
       env: {
         type: DataTypes.ENUM('daily', 'pre', 'perf', 'prod'),
         allowNull: false,
+        defaultValue: 'pre',
       },
       // 审批实例Id，生产才需要审批
       aId: DataTypes.STRING(20),

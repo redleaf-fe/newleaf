@@ -6,12 +6,13 @@ module.exports = (conn) => {
   return conn.define(
     'approveIns',
     {
-      // 审批阶段Id，最多10个阶段
-      stageId: { type: DataTypes.STRING(3), allowNull: false },
+      // 审批阶段Id，最多10个阶段，从0开始
+      stageId: { type: DataTypes.STRING(3), allowNull: false, defaultValue: 0 },
       // 审批状态
       status: {
         type: DataTypes.ENUM('pending', 'doing', 'done', 'fail'),
         allowNull: false,
+        defaultValue: 'pending',
       },
       // 审批原型Id
       apId: { type: DataTypes.STRING(20), allowNull: false },

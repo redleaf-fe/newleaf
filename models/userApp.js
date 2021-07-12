@@ -14,7 +14,7 @@ module.exports = (conn) => {
       // 应用Id
       appId: { type: DataTypes.STRING(20), allowNull: false },
       // 用户权限
-      auth: { type: DataTypes.STRING(3), allowNull: false },
+      auth: { type: DataTypes.STRING(3), allowNull: false, defaultValue: 30 },
     },
     {
       charset: 'utf8',
