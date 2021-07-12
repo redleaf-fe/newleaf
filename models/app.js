@@ -10,6 +10,15 @@ module.exports = (conn) => {
       // 创建人、编辑人
       creator: { type: DataTypes.STRING(20), allowNull: false },
       updater: { type: DataTypes.STRING(20), allowNull: false },
+      // 哪些环境正在发布
+      /*
+        ['pre', 'prod']
+       */
+      isPublishing: {
+        type: DataTypes.STRING(30),
+        defaultValue: '[]',
+        allowNull: false,
+      },
       // 审批原型Id
       apId: { type: DataTypes.STRING(20) },
     },

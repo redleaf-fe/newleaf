@@ -41,7 +41,7 @@ async function main() {
   const app = new Koa();
   const router = new Router();
 
-  app.context.codeRepo = new CodeRepo('gitlab');
+  app.context.codeRepo = new CodeRepo(config.gitType);
   app.context.conn = conn;
 
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
