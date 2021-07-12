@@ -8,7 +8,13 @@ module.exports = (conn) => {
       desc: DataTypes.STRING(100),
       appId: { type: DataTypes.STRING(20), allowNull: false },
       appName: { type: DataTypes.STRING(100), allowNull: false },
+      branch: { type: DataTypes.STRING(100), allowNull: false },
       commit: { type: DataTypes.STRING(100), allowNull: false },
+      // 状态，发布中、发布结束
+      status: {
+        type: DataTypes.ENUM('pending', 'doing', 'done', 'fail'),
+        allowNull: false,
+      },
       // 发布环境
       env: {
         type: DataTypes.ENUM('daily', 'pre', 'perf', 'prod'),
