@@ -19,6 +19,12 @@ module.exports = (conn) => {
         defaultValue: '[]',
         allowNull: false,
       },
+      // 是否正在打包，不用区分环境
+      isBuilding: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
       // 审批原型Id
       apId: { type: DataTypes.STRING(20) },
     },
