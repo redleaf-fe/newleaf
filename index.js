@@ -68,7 +68,10 @@ async function main() {
 
   require('./routes')(router);
   router.register(['/'], ['GET', 'POST'], (ctx) => {
-    ctx.body = nunjucks.render('index.html');
+    ctx.body = nunjucks.render('index.html', {
+      js: 'http://localhost:3020/js/index.js',
+      css: 'http://localhost:3020/css/index.css',
+    });
   });
 
   app.use(router.routes());
