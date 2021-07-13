@@ -5,7 +5,12 @@ const axios = require('axios');
 const config = require('../env.json');
 
 const { validate } = require('../utils');
-const { envMap, publishStatusMap, approveStatusMap } = require('../const');
+const {
+  envMap,
+  publishStatusMap,
+  approveStatusMap,
+  buildStatusMap,
+} = require('../const');
 
 const router = new Router();
 
@@ -69,7 +74,7 @@ router.get('/list', async (ctx) => {
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     where: filter,
-    order: ['updatedAt'],
+    order: [['updatedAt', 'DESC']],
   });
 
   ctx.body = publish;
@@ -97,7 +102,7 @@ router.post('/save', async (ctx) => {
     // 创建审批实例
     const res2 = await ctx.conn.models.approveIns.create({
       stageId: 0,
-      status: 'pending',
+      status: approveStatusMap.pending,
       apId: res.apId,
     });
 
@@ -130,11 +135,78 @@ router.post('/save', async (ctx) => {
   ctx.body = { message: '创建成功' };
 });
 
-router.post('/result', async (ctx) => {
+router.post('/publishResult', async (ctx) => {
+  const { id = '', result } = ctx.request.body;
 
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const status = result === 'success' ? 'done' : 'fail';
+
+  await ctx.conn.models.publish.update(
+    {
+      status,
+    },
+    {
+      where: { id },
+    }
+  );
+
+  const res = await ctx.conn.models.publish.findOne({ where: { id } });
+  const appInfo = await ctx.conn.models.app.findOne({ gitId: res.appId });
+  let isPublishing = JSON.parse(appInfo.isPublishing);
+  isPublishing = isPublishing.filter((v) => v !== res.env);
+
+  await ctx.conn.models.app.update(
+    {
+      isPublishing: JSON.stringify(isPublishing),
+    },
+    {
+      where: { gitId: res.appId },
+    }
+  );
+
+  ctx.body = { id };
 });
 
-router.post('/build', async (ctx) => {
+router.post('/buildResult', async (ctx) => {
+  const { id = '', result } = ctx.request.body;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const buildStatus = result === 'success' ? 'done' : 'fail';
+
+  await ctx.conn.models.publish.update(
+    {
+      buildStatus,
+    },
+    {
+      where: { id },
+    }
+  );
+
+  const res = await ctx.conn.models.publish.findOne({ where: { id } });
+  await ctx.conn.models.app.update(
+    {
+      isBuilding: false,
+    },
+    {
+      where: { gitId: res.appId },
+    }
+  );
+
+  ctx.body = { id };
+});
+
+// 发布
+router.post('/publish', async (ctx) => {
   const { id = '', env } = ctx.request.body;
 
   const res = await ctx.conn.models.publish.findOne({
@@ -172,6 +244,66 @@ router.post('/build', async (ctx) => {
     return;
   }
 
+  const { branch, commit, appName } = res;
+  const res2 = await axios({
+    url: `${config.publishSever}/publish`,
+    method: 'post',
+    headers: { 'Content-Type': 'application/json' },
+    data: {
+      appName,
+      branch,
+      commit,
+      id,
+    },
+  });
+
+  if (res2.data.id === id) {
+    isPublishing.push(env);
+    await ctx.conn.models.app.update(
+      {
+        isPublishing: JSON.stringify(isPublishing),
+      },
+      {
+        where: { gitId: res.appId },
+      }
+    );
+
+    await ctx.conn.models.publish.update(
+      {
+        status: publishStatusMap.doing,
+      },
+      {
+        where: { id },
+      }
+    );
+
+    ctx.body = { id };
+    return;
+  }
+
+  ctx.status = 400;
+  ctx.body = { message: res2.data.message };
+});
+
+// 打包
+router.post('/build', async (ctx) => {
+  const { id = '' } = ctx.request.body;
+
+  const res = await ctx.conn.models.publish.findOne({
+    where: {
+      id,
+    },
+  });
+
+  // 判断是否有别人在打包
+  const appInfo = await ctx.conn.models.app.findOne({ gitId: res.appId });
+  const isBuilding = JSON.parse(appInfo.isBuilding);
+  if (isBuilding) {
+    ctx.status = 400;
+    ctx.body = { message: '项目打包中' };
+    return;
+  }
+
   const appDetail = await ctx.codeRepo.getProjectDetail({ id: res.appId });
   if (!appDetail.data) {
     ctx.status = 400;
@@ -189,26 +321,35 @@ router.post('/build', async (ctx) => {
       gitPath: `http://user1:11111111@${config.gitSever}/${appDetail.data.path_with_namespace}`,
       branch,
       commit,
-      id
+      id,
     },
   });
 
-  if (res2.message === 'ok') {
-    isPublishing.push(env);
+  if (res2.data.id === id) {
     await ctx.conn.models.app.update(
       {
-        isPublishing: JSON.stringify(isPublishing),
+        isBuilding: true,
       },
       {
         where: { gitId: res.appId },
       }
     );
-    ctx.body = { message: 'ok' };
+
+    await ctx.conn.models.publish.update(
+      {
+        buildStatus: buildStatusMap.doing,
+      },
+      {
+        where: { id },
+      }
+    );
+
+    ctx.body = { id };
     return;
   }
 
   ctx.status = 400;
-  ctx.body = { message: res2.response.data.message };
+  ctx.body = { message: res2.data.message };
 });
 
 module.exports = router.routes();
