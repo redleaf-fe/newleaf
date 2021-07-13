@@ -1,7 +1,7 @@
 const { sessionValidTime } = require('../env.json');
 
 module.exports = async (ctx, next) => {
-  const whiteList = ['/', '/login/login', '/login/register'];
+  const whiteList = ['/', '/login/login', '/login/register', '/publish/buildResult', '/publish/publishResult'];
   if (ctx.method === 'OPTIONS' || whiteList.includes(ctx.path)) {
     await next();
     return;
