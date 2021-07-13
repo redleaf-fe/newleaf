@@ -132,7 +132,8 @@ router.get('/getProto', async (ctx) => {
   });
 
   if (!res.apId) {
-    ctx.status = 400;
+    // 这里返回200，没找到也要正常展示
+    // ctx.status = 400;
     ctx.body = { message: '未找到关联的业务对象' };
     return;
   }

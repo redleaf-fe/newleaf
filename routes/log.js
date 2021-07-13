@@ -14,7 +14,7 @@ router.get('/get', async (ctx) => {
   }
 
   const res = await axios({
-    url: config.logSeverPath,
+    url: `${config.logSever}/get`,
     method: 'get',
     headers: { 'Content-Type': 'application/json' },
     params: { appId, ...ctx.request.query },
