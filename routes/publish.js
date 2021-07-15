@@ -80,6 +80,40 @@ router.get('/list', async (ctx) => {
   ctx.body = publish;
 });
 
+router.get('/buildLog', async (ctx) => {
+  const { id } = ctx.request.query;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const res = await ctx.conn.models.publish.findOne({
+    attributes: ['commit', 'appName'],
+    where: { id },
+  });
+
+  const { commit, appName } = res;
+
+  try {
+    const res2 = await axios({
+      url: `${config.publishSever}/build/output`,
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' },
+      params: {
+        appName,
+        commit,
+      },
+    });
+
+    ctx.body = res2.data;
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
+  }
+});
+
 router.post('/save', async (ctx) => {
   const { appId, appName, desc = '', branch, commit, env } = ctx.request.body;
   if (!validate({ ctx, schema, obj: { appId, appName, branch, commit } })) {
@@ -156,7 +190,9 @@ router.post('/publishResult', async (ctx) => {
   );
 
   const res = await ctx.conn.models.publish.findOne({ where: { id } });
-  const appInfo = await ctx.conn.models.app.findOne({ gitId: res.appId });
+  const appInfo = await ctx.conn.models.app.findOne({
+    where: { gitId: res.appId },
+  });
   let isPublishing = JSON.parse(appInfo.isPublishing);
   isPublishing = isPublishing.filter((v) => v !== res.env);
 
@@ -236,7 +272,9 @@ router.post('/publish', async (ctx) => {
   }
 
   // 判断是否有别人在发布
-  const appInfo = await ctx.conn.models.app.findOne({ gitId: res.appId });
+  const appInfo = await ctx.conn.models.app.findOne({
+    where: { gitId: res.appId },
+  });
   const isPublishing = JSON.parse(appInfo.isPublishing);
   if (isPublishing.includes(env)) {
     ctx.status = 400;
@@ -245,44 +283,47 @@ router.post('/publish', async (ctx) => {
   }
 
   const { branch, commit, appName } = res;
-  const res2 = await axios({
-    url: `${config.publishSever}/publish`,
-    method: 'post',
-    headers: { 'Content-Type': 'application/json' },
-    data: {
-      appName,
-      branch,
-      commit,
-      id,
-    },
-  });
 
-  if (res2.data.id === id) {
-    isPublishing.push(env);
-    await ctx.conn.models.app.update(
-      {
-        isPublishing: JSON.stringify(isPublishing),
+  try {
+    const res2 = await axios({
+      url: `${config.publishSever}/publish`,
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        appName,
+        branch,
+        commit,
+        id,
       },
-      {
-        where: { gitId: res.appId },
-      }
-    );
+    });
 
-    await ctx.conn.models.publish.update(
-      {
-        status: publishStatusMap.doing,
-      },
-      {
-        where: { id },
-      }
-    );
+    if (res2.data.id === id) {
+      isPublishing.push(env);
+      await ctx.conn.models.app.update(
+        {
+          isPublishing: JSON.stringify(isPublishing),
+        },
+        {
+          where: { gitId: res.appId },
+        }
+      );
 
-    ctx.body = { id };
-    return;
+      await ctx.conn.models.publish.update(
+        {
+          status: publishStatusMap.doing,
+        },
+        {
+          where: { id },
+        }
+      );
+
+      ctx.body = { id };
+      return;
+    }
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
   }
-
-  ctx.status = 400;
-  ctx.body = { message: res2.data.message };
 });
 
 // 打包
@@ -296,7 +337,9 @@ router.post('/build', async (ctx) => {
   });
 
   // 判断是否有别人在打包
-  const appInfo = await ctx.conn.models.app.findOne({ gitId: res.appId });
+  const appInfo = await ctx.conn.models.app.findOne({
+    where: { gitId: res.appId },
+  });
   const isBuilding = JSON.parse(appInfo.isBuilding);
   if (isBuilding) {
     ctx.status = 400;
@@ -312,44 +355,54 @@ router.post('/build', async (ctx) => {
   }
 
   const { branch, commit, appName } = res;
-  const res2 = await axios({
-    url: `${config.publishSever}/build/build`,
-    method: 'post',
-    headers: { 'Content-Type': 'application/json' },
-    data: {
-      appName,
-      gitPath: `http://user1:11111111@${config.gitSever}/${appDetail.data.path_with_namespace}`,
-      branch,
-      commit,
-      id,
-    },
-  });
 
-  if (res2.data.id === id) {
-    await ctx.conn.models.app.update(
-      {
-        isBuilding: true,
+  try {
+    const res2 = await axios({
+      url: `${config.publishSever}/build/build`,
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        appName,
+        gitPath: `http://user1:11111111@${config.gitSever}/${appDetail.data.path_with_namespace}`,
+        branch,
+        commit,
+        id,
       },
-      {
-        where: { gitId: res.appId },
-      }
-    );
+    });
 
-    await ctx.conn.models.publish.update(
-      {
-        buildStatus: buildStatusMap.doing,
-      },
-      {
-        where: { id },
-      }
-    );
+    if (res2.data.cached) {
+      await ctx.conn.models.publish.update(
+        {
+          buildStatus: buildStatusMap.done,
+        },
+        {
+          where: { id },
+        }
+      );
+    } else if (res2.data.id === id) {
+      await ctx.conn.models.app.update(
+        {
+          isBuilding: true,
+        },
+        {
+          where: { gitId: res.appId },
+        }
+      );
 
+      await ctx.conn.models.publish.update(
+        {
+          buildStatus: buildStatusMap.doing,
+        },
+        {
+          where: { id },
+        }
+      );
+    }
     ctx.body = { id };
-    return;
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
   }
-
-  ctx.status = 400;
-  ctx.body = { message: res2.data.message };
 });
 
 module.exports = router.routes();
