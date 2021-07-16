@@ -118,7 +118,7 @@ router.post('/login', async (ctx) => {
       });
 
       ctx.status = 302;
-      ctx.body = { redirectUrl: '/dashboard' };
+      ctx.body = { redirectUrl: '/page/dashboard' };
     } else {
       ctx.status = 400;
       ctx.body = { message: '用户名或密码错误' };
@@ -187,7 +187,7 @@ router.post('/register', async (ctx) => {
     await setCookie({ ctx, uid, gitUid, username });
 
     ctx.status = 302;
-    ctx.body = { redirectUrl: '/dashboard' };
+    ctx.body = { redirectUrl: '/page/dashboard' };
   } else {
     ctx.status = 400;
     ctx.body = { message: res.response.data.message };
