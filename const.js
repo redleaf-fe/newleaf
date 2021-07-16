@@ -23,4 +23,8 @@ module.exports = {
   approveTypeMap: {
     publish: 'publish',
   },
+  // 错误码
+  errCode: {
+    distNotExist: 1001,
+  },
 };
