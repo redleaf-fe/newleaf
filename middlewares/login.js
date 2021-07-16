@@ -1,7 +1,7 @@
 const { sessionValidTime } = require('../env.json');
 
 module.exports = async (ctx, next) => {
-  const whiteList = ['/', '/login/login', '/login/register', '/publish/buildResult', '/publish/publishResult'];
+  const whiteList = ['/page/login', '/login/login', '/login/register', '/publish/buildResult', '/publish/publishResult'];
   if (ctx.method === 'OPTIONS' || whiteList.includes(ctx.path)) {
     await next();
     return;
@@ -37,6 +37,6 @@ module.exports = async (ctx, next) => {
 
   function gotoLogin() {
     ctx.status = 302;
-    ctx.body = { redirectUrl: '/login' };
+    ctx.body = { redirectUrl: '/page/login' };
   }
 };
