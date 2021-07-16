@@ -185,4 +185,83 @@ router.get('/commit', async (ctx) => {
   ctx.body = res.data;
 });
 
+router.get('/getServer', async (ctx) => {
+  const { id, env, type, currentPage = 1, pageSize = 10 } = ctx.request.query;
+
+  const modelMap = {
+    publish: ctx.conn.models.publishServer,
+    build: ctx.conn.models.buildServer,
+  };
+
+  const param = {
+    offset: pageSize * (currentPage - 1),
+    limit: Number(pageSize),
+    order: ['createdAt'],
+  };
+
+  if (type === 'publish') {
+    param.where = { gitId: id, env };
+  }
+
+  let res = await modelMap[type].findAndCountAll(param);
+  ctx.body = res;
+});
+
+router.post('/saveServer', async (ctx) => {
+  const { id, env, server, type } = ctx.request.body;
+
+  const modelMap = {
+    publish: ctx.conn.models.publishServer,
+    build: ctx.conn.models.buildServer,
+  };
+
+  const param = type === 'publish' ? { gitId: id, env } : {};
+
+  const res = await modelMap[type].findAll({
+    where: param,
+  });
+
+  const serverSet = Array.from(
+    new Set(server.map((v) => v.trim()).filter((v) => !!v))
+  );
+  let arr = [];
+  if (res.length > 0) {
+    serverSet.forEach((v) => {
+      let flag = false;
+      res.some((vv) => {
+        if (v === vv.server) {
+          flag = true;
+          return true;
+        }
+        return false;
+      });
+      !flag && arr.push(v);
+    });
+  } else {
+    arr = serverSet;
+  }
+
+  // 创建
+  await modelMap[type].bulkCreate(
+    arr.map((v) => ({ ...param, server: v }))
+  );
+
+  ctx.body = { message: '保存成功' };
+});
+
+router.post('/deleteServer', async (ctx) => {
+  const { serverId, type } = ctx.request.body;
+
+  const modelMap = {
+    publish: ctx.conn.models.publishServer,
+    build: ctx.conn.models.buildServer,
+  };
+
+  await modelMap[type].destroy({
+    where: { id: serverId },
+  });
+
+  ctx.body = { message: '删除成功' };
+});
+
 module.exports = router.routes();
