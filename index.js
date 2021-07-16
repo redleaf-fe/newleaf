@@ -67,7 +67,7 @@ async function main() {
   app.use(LoginMiddleware);
 
   require('./routes')(router);
-  router.register(['/'], ['GET', 'POST'], (ctx) => {
+  router.register(['/page/(.*)'], ['GET'], (ctx) => {
     ctx.body = nunjucks.render('index.html', {
       js: 'http://localhost:3020/js/index.js',
       css: 'http://localhost:3020/css/index.css',
