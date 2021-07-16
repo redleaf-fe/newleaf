@@ -13,14 +13,19 @@ router.get('/get', async (ctx) => {
     return;
   }
 
-  const res = await axios({
-    url: `${config.logSever}/get`,
-    method: 'get',
-    headers: { 'Content-Type': 'application/json' },
-    params: { appId, ...ctx.request.query },
-  });
+  try {
+    const res = await axios({
+      url: `${config.logSever}/get`,
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' },
+      params: { appId, ...ctx.request.query },
+    });
 
-  ctx.body = res.data;
+    ctx.body = res.data;
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
+  }
 });
 
 module.exports = router.routes();
