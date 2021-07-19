@@ -6,6 +6,8 @@ module.exports = (conn) => {
   return conn.define(
     'approveIns',
     {
+      // 已审核的人，结构同approveProto的stage
+      approver: DataTypes.TEXT,
       // 审批阶段Id，最多10个阶段，从0开始
       stageId: { type: DataTypes.STRING(3), allowNull: false, defaultValue: 0 },
       // 审批状态
