@@ -2,7 +2,25 @@ const Router = require('koa-router');
 
 const { hasAppAccess } = require('../services');
 
+const { approveStatusMap } = require('../const');
+
 const router = new Router();
+
+async function getInsNProto({ ctx, id }) {
+  const resPub = await ctx.conn.models.publish.findOne({
+    where: { id },
+  });
+
+  const resIns = await ctx.conn.models.approveIns.findOne({
+    where: { id: resPub.aId },
+  });
+
+  const resProto = await ctx.conn.models.approveProto.findOne({
+    where: { id: resIns.apId },
+  });
+
+  return { resIns, resProto };
+}
 
 // 创建/编辑原型
 router.post('/saveProto', async (ctx) => {
@@ -143,6 +161,71 @@ router.get('/getProto', async (ctx) => {
   });
 
   ctx.body = res2;
+});
+
+// 审核实例
+router.post('/saveIns', async (ctx) => {
+  const { id, result } = ctx.request.body;
+
+  const { resIns, resProto } = await getInsNProto({ ctx, id });
+
+  const { stageId, status, approver } = resIns;
+  const { stage } = resProto;
+
+  const stageObj = JSON.parse(stage || '[]');
+
+  if (status === approveStatusMap.pending) {
+    if (stageObj[stageId].find((v) => v.i === ctx.uid)) {
+      const approveRes = result === 'pass' ? 'pass' : 'fail';
+      const approverArr = JSON.parse(approver || '[]');
+      approverArr.push({ i: ctx.uid, n: ctx.username });
+
+      if (approveRes === 'pass') {
+        // 审核通过
+        await ctx.conn.models.approveIns.update(
+          {
+            stageId: Math.min(+stageId + 1, stageObj.length - 1),
+            status:
+              +stageId + 1 >= stageObj.length
+                ? approveStatusMap.done
+                : approveStatusMap.pending,
+            approver: JSON.stringify(approverArr),
+          },
+          {
+            where: { id: resIns.id },
+          }
+        );
+      } else {
+        // 审核拒绝
+        await ctx.conn.models.approveIns.update(
+          {
+            status: approveStatusMap.fail,
+            approver: JSON.stringify(approverArr),
+          },
+          {
+            where: { id: resIns.id },
+          }
+        );
+      }
+
+      ctx.body = { message: '操作成功' };
+    } else {
+      ctx.status = 400;
+      ctx.body = { message: '无审核权限' };
+    }
+  } else {
+    ctx.status = 400;
+    ctx.body = { message: '审核流程已完结' };
+  }
+});
+
+// 获取实例详情
+router.get('/getIns', async (ctx) => {
+  const { id } = ctx.request.query;
+
+  const { resIns, resProto } = await getInsNProto({ ctx, id });
+
+  ctx.body = { resIns, resProto };
 });
 
 module.exports = router.routes();
