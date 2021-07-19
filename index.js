@@ -2,6 +2,7 @@ const Koa = require('koa');
 const Router = require('koa-router');
 const Logger = require('koa-logger');
 const BodyParser = require('koa-body');
+const Send = require('koa-send');
 // const Helmet = require('koa-helmet');
 const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
@@ -46,8 +47,6 @@ async function main() {
 
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
 
-  nunjucks.configure('views');
-
   // app.use(Helmet());
   // 跨域配置
   app.use(async (ctx, next) => {
@@ -63,16 +62,27 @@ async function main() {
 
   app.use(BodyParser());
 
+  app.use(async (ctx, next) => {
+    if (ctx.path.startsWith('/static/')) {
+      await Send(ctx, ctx.path.slice(8), { root: __dirname + '/views' });
+    } else {
+      await next();
+    }
+  });
+
+  nunjucks.configure('views');
+  app.use(async (ctx, next) => {
+    if (ctx.path.startsWith('/page/')) {
+      ctx.body = nunjucks.render('index.html');
+    } else {
+      await next();
+    }
+  });
+
   // 登录和权限
   app.use(LoginMiddleware);
 
   require('./routes')(router);
-  router.register(['/page/(.*)'], ['GET'], (ctx) => {
-    ctx.body = nunjucks.render('index.html', {
-      js: 'http://localhost:3020/js/index.js',
-      css: 'http://localhost:3020/css/index.css',
-    });
-  });
 
   app.use(router.routes());
   app.use(router.allowedMethods());
