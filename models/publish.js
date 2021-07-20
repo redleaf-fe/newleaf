@@ -5,13 +5,14 @@ module.exports = (conn) => {
   return conn.define(
     'publish',
     {
+      id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
       desc: DataTypes.STRING(100),
       appId: { type: DataTypes.STRING(20), allowNull: false },
       appName: { type: DataTypes.STRING(100), allowNull: false },
       branch: { type: DataTypes.STRING(100), allowNull: false },
       commit: { type: DataTypes.STRING(100), allowNull: false },
       // 状态，发布中、发布结束
-      status: {
+      publishStatus: {
         type: DataTypes.ENUM('pending', 'doing', 'done', 'fail'),
         allowNull: false,
         defaultValue: 'pending',
@@ -33,6 +34,8 @@ module.exports = (conn) => {
       // 创建人
       creator: { type: DataTypes.STRING(20), allowNull: false },
       creatorId: { type: DataTypes.STRING(20), allowNull: false },
+      // 未发布及发布失败的机器
+      failedServer: DataTypes.TEXT,
     },
     {
       charset: 'utf8',

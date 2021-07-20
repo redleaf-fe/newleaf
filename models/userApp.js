@@ -5,6 +5,7 @@ module.exports = (conn) => {
   return conn.define(
     'userApp',
     {
+      id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
       // 用户Id
       gitUid: { type: DataTypes.STRING(20), allowNull: false },
       // 用户名

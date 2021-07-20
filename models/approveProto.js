@@ -5,8 +5,7 @@ module.exports = (conn) => {
   return conn.define(
     'approveProto',
     {
-      // id会默认生成
-      
+      id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
       // 环节详情，上限10个环节，每个环节最多5个人
       /*
         n: xxx 审批人姓名

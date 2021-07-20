@@ -10,7 +10,7 @@ module.exports = (conn) => {
         type: DataTypes.ENUM('daily', 'pre', 'perf', 'prod'),
         allowNull: false,
       },
-      server: { type: DataTypes.STRING(2048), allowNull: false },
+      server: { type: DataTypes.TEXT, allowNull: false },
     },
     {
       charset: 'utf8',

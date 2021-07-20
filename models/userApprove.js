@@ -5,6 +5,7 @@ module.exports = (conn) => {
   return conn.define(
     'userApprove',
     {
+      id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
       // 用户Id
       gitUid: { type: DataTypes.STRING(20), primaryKey: true },
       // 审批实例Id
