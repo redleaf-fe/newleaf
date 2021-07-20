@@ -1,4 +1,28 @@
+const os = require('os');
 const _chunk = require('lodash/chunk');
+
+function getIPAddress() {
+  const interfaces = os.networkInterfaces();
+  let address;
+  Object.keys(interfaces).some((v) => {
+    const iface = interfaces[v];
+    for (let i = 0; i < iface.length; i++) {
+      const alias = iface[i];
+      if (
+        alias.family === 'IPv4' &&
+        alias.address !== '127.0.0.1' &&
+        !alias.internal
+      ) {
+        address = alias.address;
+        return true;
+      }
+    }
+    return false;
+  });
+  return address;
+}
+
+const IPAddr = getIPAddress();
 
 module.exports = {
   toPromise(promise) {
@@ -28,4 +52,6 @@ module.exports = {
       total: ret ? ret.length : 0,
     };
   },
+  // 本机ip
+  IPAddr,
 };
