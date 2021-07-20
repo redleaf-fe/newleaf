@@ -5,4 +5,5 @@ module.exports = (router) => {
   router.use('/log', require('./log'));
   router.use('/user', require('./user'));
   router.use('/approve', require('./approve'));
+  router.use('/sourceMap', require('./sourceMap'));
 };
