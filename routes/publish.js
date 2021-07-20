@@ -2,9 +2,11 @@ const Router = require('koa-router');
 const Schema = require('validate');
 const { Op } = require('sequelize');
 const axios = require('axios');
-const config = require('../env.json');
+const path = require('path');
+const AdmZip = require('adm-zip');
 
-const { validate } = require('../utils');
+const config = require('../env.json');
+const { validate, IPAddr } = require('../utils');
 const {
   envMap,
   publishStatusMap,
@@ -98,7 +100,7 @@ router.get('/buildLog', async (ctx) => {
 
   try {
     const res2 = await axios({
-      url: `${config.publishSever}/build/output`,
+      url: `${config.buildServer}/build/output`,
       method: 'get',
       headers: { 'Content-Type': 'application/json' },
       params: {
@@ -158,7 +160,7 @@ router.post('/save', async (ctx) => {
     creatorId: ctx.uid,
     creator: ctx.username,
     env,
-    status: publishStatusMap.pending,
+    publishStatus: publishStatusMap.pending,
   };
 
   if (approveInsId) {
@@ -178,11 +180,11 @@ router.post('/publishResult', async (ctx) => {
     return;
   }
 
-  const status = result === 'success' ? 'done' : 'fail';
+  const publishStatus = result === 'success' ? 'done' : 'fail';
 
   await ctx.conn.models.publish.update(
     {
-      status,
+      publishStatus,
     },
     {
       where: { id },
@@ -229,16 +231,27 @@ router.post('/buildResult', async (ctx) => {
   );
 
   const res = await ctx.conn.models.publish.findOne({ where: { id } });
+
+  const { appId, appName, commit } = res;
   await ctx.conn.models.app.update(
     {
       isBuilding: false,
     },
     {
-      where: { gitId: res.appId },
+      where: { gitId: appId },
     }
   );
 
   ctx.body = { id };
+
+  // TODO: 解压操作改异步
+  const zip = new AdmZip(
+    path.resolve(config.appDir, `${appName}-${commit}-dist.zip`)
+  );
+  zip.extractAllTo(
+    path.resolve(config.appDir, `${appName}-${commit}-dist`),
+    true
+  );
 });
 
 // 发布
@@ -282,18 +295,18 @@ router.post('/publish', async (ctx) => {
     return;
   }
 
-  const { branch, commit, appName } = res;
+  const { commit, appName } = res;
 
   try {
     const res2 = await axios({
-      url: `${config.publishSever}/publish`,
+      url: `${config.deployServer}/publish/publish`,
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       data: {
         appName,
-        branch,
         commit,
         id,
+        // serverPath,
       },
     });
 
@@ -310,7 +323,7 @@ router.post('/publish', async (ctx) => {
 
       await ctx.conn.models.publish.update(
         {
-          status: publishStatusMap.doing,
+          publishStatus: publishStatusMap.doing,
         },
         {
           where: { id },
@@ -340,8 +353,7 @@ router.post('/build', async (ctx) => {
   const appInfo = await ctx.conn.models.app.findOne({
     where: { gitId: res.appId },
   });
-  const isBuilding = JSON.parse(appInfo.isBuilding);
-  if (isBuilding) {
+  if (appInfo.isBuilding) {
     ctx.status = 400;
     ctx.body = { message: '项目打包中' };
     return;
@@ -358,12 +370,13 @@ router.post('/build', async (ctx) => {
 
   try {
     const res2 = await axios({
-      url: `${config.publishSever}/build/build`,
+      url: `${config.buildServer}/build/build`,
       method: 'post',
       headers: { 'Content-Type': 'application/json' },
       data: {
         appName,
-        gitPath: `http://user1:11111111@${config.gitSever}/${appDetail.data.path_with_namespace}`,
+        gitPath: `http://user1:11111111@${config.gitServer}/${appDetail.data.path_with_namespace}`,
+        scpPath: `${IPAddr}:${config.appDir}`,
         branch,
         commit,
         id,
