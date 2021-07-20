@@ -3,7 +3,7 @@ const config = require('../../env.json');
 
 module.exports = async function ({ url, method = 'get', data = {} }) {
   const param = {
-    baseURL: `http://${config.gitSever}/api/v4/`,
+    baseURL: `http://${config.gitServer}/api/v4/`,
     method,
     headers: { 'PRIVATE-TOKEN': config.gitToken },
     url,

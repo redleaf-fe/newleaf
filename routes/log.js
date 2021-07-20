@@ -15,7 +15,7 @@ router.get('/get', async (ctx) => {
 
   try {
     const res = await axios({
-      url: `${config.logSever}/get`,
+      url: `${config.logServer}/get`,
       method: 'get',
       headers: { 'Content-Type': 'application/json' },
       params: { appId, ...ctx.request.query },
