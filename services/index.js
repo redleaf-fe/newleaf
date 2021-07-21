@@ -8,14 +8,14 @@ module.exports = {
 
   async idGenerate({ ctx, modelName, idName }) {
     let id = nanoid();
-    let res = await ctx.conn.models[modelName].findOne({
+    let res = await ctx.seq.models[modelName].findOne({
       attributes: [idName],
       where: { [idName]: id },
     });
 
     while (res) {
       id = nanoid();
-      res = await ctx.conn.models[modelName].findOne({
+      res = await ctx.seq.models[modelName].findOne({
         attributes: [idName],
         where: { [idName]: id },
       });
@@ -26,7 +26,7 @@ module.exports = {
 
   async findRepeat({ ctx, modelName, queryKey, queryObj, repeatMsg }) {
     // 查询重复的记录
-    const findRepeat = await ctx.conn.models[modelName].findOne({
+    const findRepeat = await ctx.seq.models[modelName].findOne({
       attributes: queryKey,
       where: queryObj,
     });

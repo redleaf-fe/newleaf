@@ -1,8 +1,8 @@
 const createModels = require('../models');
 
 module.exports = {
-  async initDatabase(conn) {
-    createModels(conn);
-    return await conn.sync({ alter: true });
+  async initDatabase(seq) {
+    createModels(seq);
+    return await seq.sync({ alter: true });
   },
 };
