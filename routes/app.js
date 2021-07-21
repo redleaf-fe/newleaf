@@ -34,7 +34,7 @@ async function getUserProjects({ ctx, name }) {
     filter[Op.and].push({ appName: { [Op.like]: `%${name}%` } });
   }
 
-  return await ctx.conn.models.userApp.findAndCountAll({
+  return await ctx.seq.models.userApp.findAndCountAll({
     where: filter,
     order: ['appName'],
   });
@@ -55,7 +55,7 @@ router.get('/list', async (ctx) => {
     filter[Op.and].push({ appName: { [Op.like]: `%${name}%` } });
   }
 
-  const res = await ctx.conn.models.userApp.findAndCountAll({
+  const res = await ctx.seq.models.userApp.findAndCountAll({
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     where: filter,
@@ -65,7 +65,7 @@ router.get('/list', async (ctx) => {
   const ret = JSON.parse(JSON.stringify(res));
   await Promise.all(
     (ret.rows || []).map(async (v) => {
-      const res2 = await ctx.conn.models.app.findOne({
+      const res2 = await ctx.seq.models.app.findOne({
         attributes: ['updater', 'updatedAt'],
         where: { gitId: v.appId },
       });
@@ -101,7 +101,7 @@ router.post('/save', async (ctx) => {
   if (id) {
     await ctx.codeRepo.updateProject({ id, name, description });
 
-    await ctx.conn.models.app.update(
+    await ctx.seq.models.app.update(
       {
         name,
         creator: ctx.username,
@@ -137,7 +137,7 @@ router.post('/save', async (ctx) => {
       access_level: 40,
     });
 
-    await ctx.conn.models.userApp.create({
+    await ctx.seq.models.userApp.create({
       gitUid: ctx.gitUid,
       username: ctx.username,
       appName: name,
@@ -145,7 +145,7 @@ router.post('/save', async (ctx) => {
       auth: 40,
     });
 
-    await ctx.conn.models.app.create({
+    await ctx.seq.models.app.create({
       name,
       gitId: res.data.id,
       creator: ctx.username,
@@ -186,39 +186,23 @@ router.get('/commit', async (ctx) => {
 });
 
 router.get('/getServer', async (ctx) => {
-  const { id, env, type, currentPage = 1, pageSize = 10 } = ctx.request.query;
+  const { id, env, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
-  const modelMap = {
-    publish: ctx.conn.models.publishServer,
-    build: ctx.conn.models.buildServer,
-  };
-
-  const param = {
+  let res = await ctx.seq.models.publishServer.findAndCountAll({
+    gitId: id,
+    env,
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     order: ['createdAt'],
-  };
-
-  if (type === 'publish') {
-    param.where = { gitId: id, env };
-  }
-
-  let res = await modelMap[type].findAndCountAll(param);
+  });
   ctx.body = res;
 });
 
 router.post('/saveServer', async (ctx) => {
-  const { id, env, server, type } = ctx.request.body;
+  const { id, env, server } = ctx.request.body;
 
-  const modelMap = {
-    publish: ctx.conn.models.publishServer,
-    build: ctx.conn.models.buildServer,
-  };
-
-  const param = type === 'publish' ? { gitId: id, env } : {};
-
-  const res = await modelMap[type].findAll({
-    where: param,
+  const res = await ctx.seq.models.publishServer.findAll({
+    where: { gitId: id, env },
   });
 
   const serverSet = Array.from(
@@ -242,22 +226,17 @@ router.post('/saveServer', async (ctx) => {
   }
 
   // 创建
-  await modelMap[type].bulkCreate(
-    arr.map((v) => ({ ...param, server: v }))
+  await ctx.seq.models.publishServer.bulkCreate(
+    arr.map((v) => ({ gitId: id, env, server: v }))
   );
 
   ctx.body = { message: '保存成功' };
 });
 
 router.post('/deleteServer', async (ctx) => {
-  const { serverId, type } = ctx.request.body;
+  const { serverId } = ctx.request.body;
 
-  const modelMap = {
-    publish: ctx.conn.models.publishServer,
-    build: ctx.conn.models.buildServer,
-  };
-
-  await modelMap[type].destroy({
+  await ctx.seq.models.publishServer.destroy({
     where: { id: serverId },
   });
 
