@@ -1,13 +1,13 @@
-module.exports = (conn) => {
+module.exports = (seq) => {
   return {
-    user: require('./user')(conn),
-    login: require('./login')(conn),
-    app: require('./app')(conn),
-    publishServer: require('./publishServer')(conn),
-    publish: require('./publish')(conn),
-    approveProto: require('./approveProto')(conn),
-    approveIns: require('./approveIns')(conn),
-    userApp: require('./userApp')(conn),
-    userApprove: require('./userApprove')(conn),
+    user: require('./user')(seq),
+    login: require('./login')(seq),
+    app: require('./app')(seq),
+    publishServer: require('./publishServer')(seq),
+    publish: require('./publish')(seq),
+    approveProto: require('./approveProto')(seq),
+    approveIns: require('./approveIns')(seq),
+    userApp: require('./userApp')(seq),
+    userApprove: require('./userApprove')(seq),
   };
 };

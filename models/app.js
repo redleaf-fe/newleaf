@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 
-module.exports = (conn) => {
-  return conn.define(
+module.exports = (seq) => {
+  return seq.define(
     'app',
     {
       name: { type: DataTypes.STRING(100), primaryKey: true },

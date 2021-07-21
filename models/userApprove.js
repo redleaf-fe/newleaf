@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 // 记录用户需要审批的实例
-module.exports = (conn) => {
-  return conn.define(
+module.exports = (seq) => {
+  return seq.define(
     'userApprove',
     {
       id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },

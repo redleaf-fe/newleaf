@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 // 记录当前已登录的用户
-module.exports = (conn) => {
-  return conn.define(
+module.exports = (seq) => {
+  return seq.define(
     'login',
     {
       // 用户Id

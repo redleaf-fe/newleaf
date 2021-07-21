@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 // 记录所有注册的用户
-module.exports = (conn) => {
-  return conn.define(
+module.exports = (seq) => {
+  return seq.define(
     'user',
     {
       username: { type: DataTypes.STRING(20), allowNull: false },

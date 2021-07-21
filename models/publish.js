@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 
 // app的发布数据
-module.exports = (conn) => {
-  return conn.define(
+module.exports = (seq) => {
+  return seq.define(
     'publish',
     {
       id: { type: DataTypes.BIGINT, autoIncrement: true, primaryKey: true },
