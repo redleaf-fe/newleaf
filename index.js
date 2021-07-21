@@ -13,7 +13,7 @@ const { Database, CodeRepo } = require('./services');
 const { LoginMiddleware } = require('./middlewares');
 
 async function main() {
-  const conn = new Sequelize({
+  const seq = new Sequelize({
     host: config.databaseHost,
     dialect: 'mysql',
     username: config.databaseUserName,
@@ -26,14 +26,14 @@ async function main() {
   });
 
   try {
-    await conn.authenticate();
+    await seq.authenticate();
     console.log('数据库连接成功');
   } catch (error) {
     console.error('数据库连接失败：', error);
   }
 
   try {
-    await Database.initDatabase(conn);
+    await Database.initDatabase(seq);
     console.log('数据库初始化成功');
   } catch (error) {
     console.error('数据库初始化失败：', error);
@@ -43,7 +43,7 @@ async function main() {
   const router = new Router();
 
   app.context.codeRepo = new CodeRepo(config.gitType);
-  app.context.conn = conn;
+  app.context.seq = seq;
 
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
 
