@@ -7,15 +7,15 @@ const { approveStatusMap } = require('../const');
 const router = new Router();
 
 async function getInsNProto({ ctx, id }) {
-  const resPub = await ctx.conn.models.publish.findOne({
+  const resPub = await ctx.seq.models.publish.findOne({
     where: { id },
   });
 
-  const resIns = await ctx.conn.models.approveIns.findOne({
+  const resIns = await ctx.seq.models.approveIns.findOne({
     where: { id: resPub.aId },
   });
 
-  const resProto = await ctx.conn.models.approveProto.findOne({
+  const resProto = await ctx.seq.models.approveProto.findOne({
     where: { id: resIns.apId },
   });
 
@@ -46,7 +46,7 @@ router.post('/saveProto', async (ctx) => {
 
   const businessMap = {
     app: {
-      model: ctx.conn.models.app,
+      model: ctx.seq.models.app,
       filter: { gitId: businessId },
     },
   };
@@ -85,7 +85,7 @@ router.post('/saveProto', async (ctx) => {
 
   // 编辑
   if (id) {
-    await ctx.conn.models.approveProto.update(
+    await ctx.seq.models.approveProto.update(
       {
         stage: JSON.stringify(stage),
       },
@@ -99,7 +99,7 @@ router.post('/saveProto', async (ctx) => {
     ctx.body = { message: '保存成功' };
   } else {
     // 创建
-    const res = await ctx.conn.models.approveProto.create({
+    const res = await ctx.seq.models.approveProto.create({
       stage: JSON.stringify(stage),
     });
 
@@ -138,7 +138,7 @@ router.get('/getProto', async (ctx) => {
 
   const businessMap = {
     app: {
-      model: ctx.conn.models.app,
+      model: ctx.seq.models.app,
       idKey: 'gitId',
     },
   };
@@ -156,7 +156,7 @@ router.get('/getProto', async (ctx) => {
     return;
   }
 
-  const res2 = await ctx.conn.models.approveProto.findOne({
+  const res2 = await ctx.seq.models.approveProto.findOne({
     where: { id: res.apId },
   });
 
@@ -182,7 +182,7 @@ router.post('/saveIns', async (ctx) => {
 
       if (approveRes === 'pass') {
         // 审核通过
-        await ctx.conn.models.approveIns.update(
+        await ctx.seq.models.approveIns.update(
           {
             stageId: Math.min(+stageId + 1, stageObj.length - 1),
             status:
@@ -197,7 +197,7 @@ router.post('/saveIns', async (ctx) => {
         );
       } else {
         // 审核拒绝
-        await ctx.conn.models.approveIns.update(
+        await ctx.seq.models.approveIns.update(
           {
             status: approveStatusMap.fail,
             approver: JSON.stringify(approverArr),

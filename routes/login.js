@@ -57,7 +57,7 @@ const registerSchema = new Schema({
 
 async function setCookie({ ctx, uid, gitUid, username }) {
   // 判断是否已经登录过
-  const res = await ctx.conn.models.login.findOne({
+  const res = await ctx.seq.models.login.findOne({
     attributes: ['uid'],
     where: { uid },
   });
@@ -71,7 +71,7 @@ async function setCookie({ ctx, uid, gitUid, username }) {
 
   if (res) {
     // 更新token
-    await ctx.conn.models.login.update(
+    await ctx.seq.models.login.update(
       {
         loginToken: token,
       },
@@ -82,7 +82,7 @@ async function setCookie({ ctx, uid, gitUid, username }) {
       }
     );
   } else {
-    await ctx.conn.models.login.create({
+    await ctx.seq.models.login.create({
       uid,
       gitUid,
       username,
@@ -102,7 +102,7 @@ router.post('/login', async (ctx) => {
 
   const sha256 = crypto.createHash('sha256');
   const encrypt = sha256.update(password + salt).digest('base64');
-  const res = await ctx.conn.models.user.findOne({
+  const res = await ctx.seq.models.user.findOne({
     attributes: ['password', 'uid', 'gitUid', 'username'],
     where: { username },
   });
@@ -176,7 +176,7 @@ router.post('/register', async (ctx) => {
     const sha256 = crypto.createHash('sha256');
     const encrypt = sha256.update(password + salt).digest('base64');
 
-    await ctx.conn.models.user.create({
+    await ctx.seq.models.user.create({
       username,
       password: encrypt,
       uid,

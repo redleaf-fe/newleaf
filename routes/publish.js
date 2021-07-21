@@ -72,7 +72,7 @@ router.get('/list', async (ctx) => {
     ],
   };
 
-  const publish = await ctx.conn.models.publish.findAndCountAll({
+  const publish = await ctx.seq.models.publish.findAndCountAll({
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     where: filter,
@@ -91,7 +91,7 @@ router.get('/buildLog', async (ctx) => {
     return;
   }
 
-  const res = await ctx.conn.models.publish.findOne({
+  const res = await ctx.seq.models.publish.findOne({
     attributes: ['commit', 'appName'],
     where: { id },
   });
@@ -125,7 +125,7 @@ router.post('/save', async (ctx) => {
   let approveInsId;
 
   if (env === envMap.prod) {
-    const res = await ctx.conn.models.app.findOne({
+    const res = await ctx.seq.models.app.findOne({
       where: { gitId: appId },
     });
 
@@ -136,7 +136,7 @@ router.post('/save', async (ctx) => {
     }
 
     // 创建审批实例
-    const res2 = await ctx.conn.models.approveIns.create({
+    const res2 = await ctx.seq.models.approveIns.create({
       stageId: 0,
       status: approveStatusMap.pending,
       apId: res.apId,
@@ -167,7 +167,7 @@ router.post('/save', async (ctx) => {
     param.aId = approveInsId;
   }
 
-  await ctx.conn.models.publish.create(param);
+  await ctx.seq.models.publish.create(param);
   ctx.body = { message: '创建成功' };
 });
 
@@ -182,7 +182,7 @@ router.post('/publishResult', async (ctx) => {
 
   const publishStatus = result === 'success' ? 'done' : 'fail';
 
-  await ctx.conn.models.publish.update(
+  await ctx.seq.models.publish.update(
     {
       publishStatus,
     },
@@ -191,14 +191,14 @@ router.post('/publishResult', async (ctx) => {
     }
   );
 
-  const res = await ctx.conn.models.publish.findOne({ where: { id } });
-  const appInfo = await ctx.conn.models.app.findOne({
+  const res = await ctx.seq.models.publish.findOne({ where: { id } });
+  const appInfo = await ctx.seq.models.app.findOne({
     where: { gitId: res.appId },
   });
   let isPublishing = JSON.parse(appInfo.isPublishing);
   isPublishing = isPublishing.filter((v) => v !== res.env);
 
-  await ctx.conn.models.app.update(
+  await ctx.seq.models.app.update(
     {
       isPublishing: JSON.stringify(isPublishing),
     },
@@ -221,7 +221,7 @@ router.post('/buildResult', async (ctx) => {
 
   const buildStatus = result === 'success' ? 'done' : 'fail';
 
-  await ctx.conn.models.publish.update(
+  await ctx.seq.models.publish.update(
     {
       buildStatus,
     },
@@ -230,10 +230,10 @@ router.post('/buildResult', async (ctx) => {
     }
   );
 
-  const res = await ctx.conn.models.publish.findOne({ where: { id } });
+  const res = await ctx.seq.models.publish.findOne({ where: { id } });
 
   const { appId, appName, commit } = res;
-  await ctx.conn.models.app.update(
+  await ctx.seq.models.app.update(
     {
       isBuilding: false,
     },
@@ -258,7 +258,7 @@ router.post('/buildResult', async (ctx) => {
 router.post('/publish', async (ctx) => {
   const { id = '', env } = ctx.request.body;
 
-  const res = await ctx.conn.models.publish.findOne({
+  const res = await ctx.seq.models.publish.findOne({
     where: {
       id,
     },
@@ -267,7 +267,7 @@ router.post('/publish', async (ctx) => {
   // 生产环境发布需要审核通过
   if (env === envMap.prod) {
     if (res.aId) {
-      const res2 = await ctx.conn.models.approveIns.findOne({
+      const res2 = await ctx.seq.models.approveIns.findOne({
         where: {
           id: res.aId,
         },
@@ -285,7 +285,7 @@ router.post('/publish', async (ctx) => {
   }
 
   // 判断是否有别人在发布
-  const appInfo = await ctx.conn.models.app.findOne({
+  const appInfo = await ctx.seq.models.app.findOne({
     where: { gitId: res.appId },
   });
   const isPublishing = JSON.parse(appInfo.isPublishing);
@@ -312,7 +312,7 @@ router.post('/publish', async (ctx) => {
 
     if (res2.data.id === id) {
       isPublishing.push(env);
-      await ctx.conn.models.app.update(
+      await ctx.seq.models.app.update(
         {
           isPublishing: JSON.stringify(isPublishing),
         },
@@ -321,7 +321,7 @@ router.post('/publish', async (ctx) => {
         }
       );
 
-      await ctx.conn.models.publish.update(
+      await ctx.seq.models.publish.update(
         {
           publishStatus: publishStatusMap.doing,
         },
@@ -343,14 +343,14 @@ router.post('/publish', async (ctx) => {
 router.post('/build', async (ctx) => {
   const { id = '' } = ctx.request.body;
 
-  const res = await ctx.conn.models.publish.findOne({
+  const res = await ctx.seq.models.publish.findOne({
     where: {
       id,
     },
   });
 
   // 判断是否有别人在打包
-  const appInfo = await ctx.conn.models.app.findOne({
+  const appInfo = await ctx.seq.models.app.findOne({
     where: { gitId: res.appId },
   });
   if (appInfo.isBuilding) {
@@ -384,7 +384,7 @@ router.post('/build', async (ctx) => {
     });
 
     if (res2.data.cached) {
-      await ctx.conn.models.publish.update(
+      await ctx.seq.models.publish.update(
         {
           buildStatus: buildStatusMap.done,
         },
@@ -393,7 +393,7 @@ router.post('/build', async (ctx) => {
         }
       );
     } else if (res2.data.id === id) {
-      await ctx.conn.models.app.update(
+      await ctx.seq.models.app.update(
         {
           isBuilding: true,
         },
@@ -402,7 +402,7 @@ router.post('/build', async (ctx) => {
         }
       );
 
-      await ctx.conn.models.publish.update(
+      await ctx.seq.models.publish.update(
         {
           buildStatus: buildStatusMap.doing,
         },

@@ -9,7 +9,7 @@ router.get('/getByName', async (ctx) => {
   const { username } = ctx.request.query;
 
   if (username) {
-    const res = await ctx.conn.models.user.findAll({
+    const res = await ctx.seq.models.user.findAll({
       attributes: ['uid', 'username'],
       where: { username: { [Op.like]: `%${username}%` } },
       order: ['username'],
@@ -42,7 +42,7 @@ router.post('/removeUserFromApp', async (ctx) => {
     user_id: gitUid,
   });
 
-  await ctx.conn.models.userApp.destroy({
+  await ctx.seq.models.userApp.destroy({
     where: {
       gitUid,
       appId: id,
@@ -57,7 +57,7 @@ router.post('/saveUserToApp', async (ctx) => {
 
   if (uid) {
     // 创建
-    const res = await ctx.conn.models.user.findOne({
+    const res = await ctx.seq.models.user.findOne({
       attributes: ['gitUid', 'username'],
       where: { uid },
     });
@@ -81,7 +81,7 @@ router.post('/saveUserToApp', async (ctx) => {
       access_level: access || 30,
     });
 
-    await ctx.conn.models.userApp.create({
+    await ctx.seq.models.userApp.create({
       gitUid: res.gitUid,
       username: res.username,
       appName: name,
@@ -111,7 +111,7 @@ router.post('/saveUserToApp', async (ctx) => {
       access_level: access || 30,
     });
 
-    await ctx.conn.models.userApp.update(
+    await ctx.seq.models.userApp.update(
       {
         auth: access || 30,
       },
