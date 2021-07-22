@@ -1,7 +1,12 @@
-const { sessionValidTime } = require('../env.json');
+const redisKey = require('../redisKey');
 
 module.exports = async (ctx, next) => {
-  const whiteList = ['/login/login', '/login/register', '/publish/buildResult', '/publish/publishResult'];
+  const whiteList = [
+    '/login/login',
+    '/login/register',
+    '/publish/buildResult',
+    '/publish/publishResult',
+  ];
   if (ctx.method === 'OPTIONS' || whiteList.includes(ctx.path)) {
     await next();
     return;
@@ -12,24 +17,16 @@ module.exports = async (ctx, next) => {
   if (!token) {
     gotoLogin();
   } else {
-    const res = await ctx.conn.models.login.findOne({
-      attributes: ['uid', 'gitUid', 'username', 'updatedAt'],
-      where: { loginToken: token },
-    });
-    if (res) {
-      // cookie中的token超过时间也要重新登录，并删除login中的记录
-      if (sessionValidTime * 1000 <= new Date() - new Date(res.updatedAt)) {
-        gotoLogin();
-        await ctx.conn.models.login.destroy({
-          where: { loginToken: token },
-        });
-      } else {
-        // 方便后面的逻辑获取用户id；cookie中有username，但是因为cookie可以手动修改，所以不使用username做任何写操作
-        ctx.uid = res.uid;
-        ctx.gitUid = res.gitUid;
-        ctx.username = res.username;
-        await next();
-      }
+    const tokenKey = redisKey.loginTokenUid(token);
+    const res = await ctx.redis.existsAsync(tokenKey);
+    if (+res) {
+      const uid = await ctx.redis.getAsync(tokenKey);
+      const res2 = await ctx.redis.hgetallAsync(redisKey.loginInfo(uid));
+      // 方便后面的逻辑获取用户id；cookie中有username，但是因为cookie可以手动修改，所以不使用username做任何写操作
+      ctx.uid = uid;
+      ctx.gitUid = res2.gitUid;
+      ctx.username = res2.username;
+      await next();
     } else {
       gotoLogin();
     }
