@@ -7,10 +7,12 @@ const Send = require('koa-send');
 const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
+const redis = require('redis');
 
 const config = require('./env.json');
 const { Database, CodeRepo } = require('./services');
 const { LoginMiddleware } = require('./middlewares');
+const { redisPromisify } = require('./utils');
 
 async function main() {
   const seq = new Sequelize({
@@ -39,11 +41,18 @@ async function main() {
     console.error('数据库初始化失败：', error);
   }
 
+  const client = redis.createClient({
+    host: config.redisHost,
+    port: config.redisPort,
+  });
+  redisPromisify(client);
+
   const app = new Koa();
   const router = new Router();
 
   app.context.codeRepo = new CodeRepo(config.gitType);
   app.context.seq = seq;
+  app.context.redis = client;
 
   app.keys = new KeyGrip(config.keys.split(','), 'sha256');
 
