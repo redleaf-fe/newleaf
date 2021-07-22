@@ -1,4 +1,5 @@
 const os = require('os');
+const { promisify } = require('util');
 const _chunk = require('lodash/chunk');
 
 function getIPAddress() {
@@ -31,6 +32,15 @@ module.exports = {
         return [null, data];
       })
       .catch((err) => [err]);
+  },
+  // redis promisify
+  redisPromisify(client) {
+    client.existsAsync = promisify(client.exists).bind(client);
+    client.getAsync = promisify(client.get).bind(client);
+    client.setAsync = promisify(client.set).bind(client);
+    client.mgetAsync = promisify(client.mget).bind(client);
+    client.hsetAsync = promisify(client.hset).bind(client);
+    client.hgetallAsync = promisify(client.hgetall).bind(client);
   },
   // 参数校验
   validate({ ctx, schema, obj }) {
