@@ -5,7 +5,7 @@ const nanoid = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyz', 20);
 module.exports = {
   Database: require('./database'),
   CodeRepo: require('./codeRepo'),
-
+  nanoid,
   async idGenerate({ ctx, modelName, idName }) {
     let id = nanoid();
     let res = await ctx.seq.models[modelName].findOne({
