@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const Schema = require('validate');
 
 const { salt, sessionValidTime } = require('../env.json');
-const { idGenerate, findRepeat } = require('../services');
+const redisKey = require('../redisKey');
+const { idGenerate, nanoid, findRepeat } = require('../services');
 const { validate } = require('../utils');
 
 const router = new Router();
@@ -56,42 +57,44 @@ const registerSchema = new Schema({
 });
 
 async function setCookie({ ctx, uid, gitUid, username }) {
+  const infoKey = redisKey.loginInfo(uid);
+
+  const res = await ctx.redis.hgetallAsync(infoKey);
   // 判断是否已经登录过
-  const res = await ctx.seq.models.login.findOne({
-    attributes: ['uid'],
-    where: { uid },
-  });
+  if (!res) {
+    // 生成登录token
+    const token = await getToken();
 
-  // 生成登录token
-  const token = await idGenerate({
-    ctx,
-    modelName: 'login',
-    idName: 'uid',
-  });
-
-  if (res) {
-    // 更新token
-    await ctx.seq.models.login.update(
-      {
-        loginToken: token,
-      },
-      {
-        where: {
-          uid,
-        },
-      }
-    );
-  } else {
-    await ctx.seq.models.login.create({
-      uid,
+    const tokenKey = redisKey.loginTokenUid(token);
+    await ctx.redis.hsetAsync(
+      infoKey,
+      'gitUid',
       gitUid,
+      'username',
       username,
-      loginToken: token,
-    });
+      'loginToken',
+      token
+    );
+    await ctx.redis.setAsync(tokenKey, uid);
+
+    ctx.redis.expire(infoKey, sessionValidTime * 1000);
+    ctx.redis.expire(tokenKey, sessionValidTime * 1000);
+
+    ctx.cookies.set('token', token, cookieConfig);
+    ctx.cookies.set('username', username, { httpOnly: false });
   }
 
-  ctx.cookies.set('token', token, cookieConfig);
-  ctx.cookies.set('username', username, { httpOnly: false });
+  async function getToken() {
+    let token = nanoid();
+    let res = await ctx.redis.existsAsync(redisKey.loginTokenUid(token));
+
+    while (+res) {
+      token = nanoid();
+      res = await ctx.redis.existsAsync(redisKey.loginTokenUid(token));
+    }
+
+    return token;
+  }
 }
 
 router.post('/login', async (ctx) => {
