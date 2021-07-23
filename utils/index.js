@@ -39,6 +39,16 @@ module.exports = {
     client.getAsync = promisify(client.get).bind(client);
     client.setAsync = promisify(client.set).bind(client);
     client.mgetAsync = promisify(client.mget).bind(client);
+    // list
+    client.lpushAsync = promisify(client.lpush).bind(client);
+    client.lrangeAsync = promisify(client.lrange).bind(client);
+    client.llenAsync = promisify(client.llen).bind(client);
+    // set
+    client.saddAsync = promisify(client.sadd).bind(client);
+    client.scardAsync = promisify(client.scard).bind(client);
+    client.smembersAsync = promisify(client.smembers).bind(client);
+    client.sismemberAsync = promisify(client.sismember).bind(client);
+    // hash
     client.hsetAsync = promisify(client.hset).bind(client);
     client.hgetallAsync = promisify(client.hgetall).bind(client);
   },
