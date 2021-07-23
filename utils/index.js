@@ -35,7 +35,9 @@ module.exports = {
   },
   // redis promisify
   redisPromisify(client) {
+    client.ttlAsync = promisify(client.ttl).bind(client);
     client.existsAsync = promisify(client.exists).bind(client);
+    // 
     client.getAsync = promisify(client.get).bind(client);
     client.setAsync = promisify(client.set).bind(client);
     client.mgetAsync = promisify(client.mget).bind(client);

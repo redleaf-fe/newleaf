@@ -77,8 +77,8 @@ async function setCookie({ ctx, uid, gitUid, username }) {
     );
     await ctx.redis.setAsync(tokenKey, uid);
 
-    ctx.redis.expire(infoKey, sessionValidTime * 1000);
-    ctx.redis.expire(tokenKey, sessionValidTime * 1000);
+    ctx.redis.expire(infoKey, sessionValidTime);
+    ctx.redis.expire(tokenKey, sessionValidTime);
 
     ctx.cookies.set('token', token, cookieConfig);
     ctx.cookies.set('username', username, { httpOnly: false });
