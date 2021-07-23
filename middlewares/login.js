@@ -4,6 +4,7 @@ module.exports = async (ctx, next) => {
   const whiteList = [
     '/login/login',
     '/login/register',
+    '/publish/getShouldPublish',
     '/publish/buildResult',
     '/publish/publishResult',
   ];
