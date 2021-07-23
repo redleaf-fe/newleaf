@@ -4,9 +4,12 @@ const { Op } = require('sequelize');
 const axios = require('axios');
 const path = require('path');
 const AdmZip = require('adm-zip');
+const fs = require('fs-extra');
+const { exec } = require('child_process');
 
 const config = require('../env.json');
 const { validate, IPAddr } = require('../utils');
+const redisKey = require('../redisKey');
 const {
   envMap,
   publishStatusMap,
@@ -171,8 +174,8 @@ router.post('/save', async (ctx) => {
   ctx.body = { message: '创建成功' };
 });
 
-router.post('/publishResult', async (ctx) => {
-  const { id = '', result } = ctx.request.body;
+router.post('/getShouldPublish', async (ctx) => {
+  const { id = '', address } = ctx.request.body;
 
   if (!id) {
     ctx.status = 400;
@@ -180,34 +183,111 @@ router.post('/publishResult', async (ctx) => {
     return;
   }
 
-  const publishStatus = result === 'success' ? 'done' : 'fail';
-
-  await ctx.seq.models.publish.update(
-    {
-      publishStatus,
-    },
-    {
+  const isMember = await ctx.redis.sismemberAsync(
+    redisKey.publishServer(id),
+    address
+  );
+  if (isMember) {
+    const { appName, commit } = await ctx.seq.models.publish.findOne({
       where: { id },
+    });
+    const nomapDirPath = path.resolve(
+      config.appDir,
+      `${appName}-${commit}-dist-nomap`
+    );
+    const nomapZipPath = path.resolve(
+      config.appDir,
+      `${appName}-${commit}-dist-nomap.zip`
+    );
+    if (!fs.existsSync(nomapDirPath)) {
+      await fs.copySync(
+        path.resolve(config.appDir, `${appName}-${commit}-dist`),
+        nomapDirPath,
+        {
+          filter: (src) => {
+            const stat = fs.statSync(src);
+            if (stat.isFile() && src.endsWith('.map')) {
+              return false;
+            }
+            return true;
+          },
+        }
+      );
     }
-  );
+    if (!fs.existsSync(nomapZipPath)) {
+      const zip = new AdmZip();
+      zip.addLocalFolder(nomapDirPath);
+      zip.writeZip(nomapZipPath);
+    }
 
-  const res = await ctx.seq.models.publish.findOne({ where: { id } });
-  const appInfo = await ctx.seq.models.app.findOne({
-    where: { gitId: res.appId },
-  });
-  let isPublishing = JSON.parse(appInfo.isPublishing);
-  isPublishing = isPublishing.filter((v) => v !== res.env);
+    const res = await new Promise((res) => {
+      exec(`scp -r ${nomapZipPath} ${address}`, (err) => {
+        if (err) {
+          fs.writeFileSync(
+            path.resolve(config.appDir, `${appName}-${commit}.log`),
+            JSON.stringify(err),
+            { flag: 'a' }
+          );
+          res(0);
+        } else {
+          res(1);
+        }
+      });
+    });
 
-  await ctx.seq.models.app.update(
-    {
-      isPublishing: JSON.stringify(isPublishing),
-    },
-    {
+    if (res) {
+      ctx.body = { id };
+    } else {
+      ctx.body = { message: 'error' };
+    }
+  } else {
+    ctx.body = { message: 'should not' };
+  }
+});
+
+router.post('/publishResult', async (ctx) => {
+  const { id = '', address } = ctx.request.body;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const publishServerKey = redisKey.publishServer(id);
+  const publishedServerKey = redisKey.publishedServer(id);
+
+  await ctx.redis.saddAsync(publishedServerKey, address);
+  const publishLen = await ctx.redis.scardAsync(publishServerKey);
+  const publishedLen = await ctx.redis.scardAsync(publishedServerKey);
+
+  if (publishLen === publishedLen) {
+    const res = await ctx.seq.models.publish.findOne({ where: { id } });
+    const appInfo = await ctx.seq.models.app.findOne({
       where: { gitId: res.appId },
-    }
-  );
+    });
+    let isPublishing = JSON.parse(appInfo.isPublishing);
+    isPublishing = isPublishing.filter((v) => v !== res.env);
 
-  ctx.body = { id };
+    await ctx.seq.models.publish.update(
+      {
+        publishStatus: publishStatusMap.done,
+      },
+      {
+        where: { id },
+      }
+    );
+    await ctx.seq.models.app.update(
+      {
+        isPublishing: JSON.stringify(isPublishing),
+      },
+      {
+        where: { gitId: res.appId },
+      }
+    );
+
+    ctx.body = { id };
+  }
 });
 
 router.post('/buildResult', async (ctx) => {
@@ -295,47 +375,51 @@ router.post('/publish', async (ctx) => {
     return;
   }
 
-  const { commit, appName } = res;
+  const server = await ctx.seq.models.publishServer.findAndCountAll({
+    where: {
+      gitId: res.appId,
+      env,
+    },
+  });
 
-  try {
-    const res2 = await axios({
-      url: `${config.deployServer}/publish/publish`,
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        appName,
-        commit,
-        id,
-        // serverPath,
+  if (!server.count) {
+    ctx.status = 400;
+    ctx.body = { message: '没有配置发布机器' };
+  } else {
+    await ctx.redis.saddAsync(
+      redisKey.publishServer(id),
+      ...server.rows.map((v) => v.server)
+    );
+
+    isPublishing.push(env);
+    await ctx.seq.models.app.update(
+      {
+        isPublishing: JSON.stringify(isPublishing),
       },
-    });
+      {
+        where: { gitId: res.appId },
+      }
+    );
 
-    if (res2.data.id === id) {
-      isPublishing.push(env);
-      await ctx.seq.models.app.update(
-        {
-          isPublishing: JSON.stringify(isPublishing),
-        },
-        {
-          where: { gitId: res.appId },
-        }
-      );
+    await ctx.seq.models.publish.update(
+      {
+        publishStatus: publishStatusMap.doing,
+      },
+      {
+        where: { id },
+      }
+    );
 
-      await ctx.seq.models.publish.update(
-        {
-          publishStatus: publishStatusMap.doing,
-        },
-        {
-          where: { id },
-        }
-      );
-
-      ctx.body = { id };
-      return;
-    }
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { message: e.response.data.message };
+    ctx.redis.publish(
+      redisKey.deployChannel,
+      JSON.stringify({
+        publishId: id,
+        appId: res.appId,
+        commit: res.commit,
+        appName: res.appName,
+      })
+    );
+    ctx.body = { id };
   }
 });
 

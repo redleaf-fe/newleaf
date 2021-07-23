@@ -189,8 +189,7 @@ router.get('/getServer', async (ctx) => {
   const { id, env, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   let res = await ctx.seq.models.publishServer.findAndCountAll({
-    gitId: id,
-    env,
+    where: { gitId: id, env },
     offset: pageSize * (currentPage - 1),
     limit: Number(pageSize),
     order: ['createdAt'],

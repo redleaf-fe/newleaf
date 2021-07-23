@@ -34,8 +34,6 @@ module.exports = (seq) => {
       // 创建人
       creator: { type: DataTypes.STRING(20), allowNull: false },
       creatorId: { type: DataTypes.STRING(20), allowNull: false },
-      // 未发布及发布失败的机器
-      failedServer: DataTypes.TEXT,
     },
     {
       charset: 'utf8',
