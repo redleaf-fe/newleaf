@@ -307,7 +307,8 @@ router.post('/buildResult', async (ctx) => {
     return;
   }
 
-  const buildStatus = result === 'success' ? 'done' : 'fail';
+  const buildStatus =
+    result === 'success' ? buildStatusMap.done : buildStatusMap.fail;
 
   await ctx.seq.models.publish.update(
     {
@@ -444,9 +445,24 @@ router.post('/build', async (ctx) => {
     },
   });
 
+  const { appName, branch, commit, appId } = res;
+  if (fs.existsSync(path.resolve(appDir, `${appName}-${commit}-dist`))) {
+    // 打包结果已存在
+    await ctx.seq.models.publish.update(
+      {
+        buildStatus: buildStatusMap.done,
+      },
+      {
+        where: { id },
+      }
+    );
+    ctx.body = { id };
+    return;
+  }
+
   // 判断是否有别人在打包
   const appInfo = await ctx.seq.models.app.findOne({
-    where: { gitId: res.appId },
+    where: { gitId: appId },
   });
   if (appInfo.isBuilding) {
     ctx.status = 400;
@@ -454,14 +470,12 @@ router.post('/build', async (ctx) => {
     return;
   }
 
-  const appDetail = await ctx.codeRepo.getProjectDetail({ id: res.appId });
+  const appDetail = await ctx.codeRepo.getProjectDetail({ id: appId });
   if (!appDetail.data) {
     ctx.status = 400;
     ctx.body = { message: '获取项目详情失败' };
     return;
   }
-
-  const { branch, commit, appName } = res;
 
   try {
     const res2 = await axios({
@@ -493,7 +507,7 @@ router.post('/build', async (ctx) => {
           isBuilding: true,
         },
         {
-          where: { gitId: res.appId },
+          where: { gitId: appId },
         }
       );
 
