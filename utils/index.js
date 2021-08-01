@@ -70,8 +70,8 @@ module.exports = {
       ? data.filter((v) => v[searchKey].includes(search))
       : data;
     return {
-      data: _chunk(ret, pageSize)[currentPage - 1],
-      total: ret ? ret.length : 0,
+      rows: _chunk(ret, pageSize)[currentPage - 1],
+      count: ret ? ret.length : 0,
     };
   },
   // 本机ip

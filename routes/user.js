@@ -149,12 +149,8 @@ router.get('/getMembersInApp', async (ctx) => {
       param.search = name;
       param.searchKey = 'username';
     }
-    res = searchAndPage(param);
 
-    ctx.body = {
-      count: res.total,
-      rows: res.data,
-    };
+    ctx.body = searchAndPage(param);
   } else {
     ctx.status = 400;
     ctx.body = { message: 'id必填' };
