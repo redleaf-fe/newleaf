@@ -7,13 +7,7 @@ const AdmZip = require('adm-zip');
 const fs = require('fs-extra');
 const { exec } = require('child_process');
 
-const {
-  appDir,
-  buildServer,
-  gitServer,
-  sessionValidTime,
-} = require('../env.json');
-const { validate, IPAddr } = require('../utils');
+const { validate, IPAddr, searchAndPage } = require('../utils');
 const redisKey = require('../redisKey');
 const {
   envMap,
@@ -21,6 +15,12 @@ const {
   approveStatusMap,
   buildStatusMap,
 } = require('../const');
+const {
+  appDir,
+  buildServer,
+  gitServer,
+  sessionValidTime,
+} = require('../env.json');
 
 const router = new Router();
 
@@ -88,40 +88,6 @@ router.get('/list', async (ctx) => {
   });
 
   ctx.body = publish;
-});
-
-router.get('/buildLog', async (ctx) => {
-  const { id } = ctx.request.query;
-
-  if (!id) {
-    ctx.status = 400;
-    ctx.body = { message: 'id必填' };
-    return;
-  }
-
-  const res = await ctx.seq.models.publish.findOne({
-    attributes: ['commit', 'appName'],
-    where: { id },
-  });
-
-  const { commit, appName } = res;
-
-  try {
-    const res2 = await axios({
-      url: `${buildServer}/build/output`,
-      method: 'get',
-      headers: { 'Content-Type': 'application/json' },
-      params: {
-        appName,
-        commit,
-      },
-    });
-
-    ctx.body = res2.data;
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { message: e.response.data.message };
-  }
 });
 
 router.post('/save', async (ctx) => {
@@ -250,6 +216,44 @@ router.post('/getShouldPublish', async (ctx) => {
   }
 });
 
+router.get('/publishDetail', async (ctx) => {
+  const { id = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const publishServerKey = redisKey.publishServer(id);
+  const publishedServerKey = redisKey.publishedServer(id);
+
+  const publishServer = await ctx.redis.smembersAsync(publishServerKey);
+  const publishedServer = await ctx.redis.smembersAsync(publishedServerKey);
+
+  const arr = publishServer.map((v) => {
+    const s = { server: v };
+    let published = false;
+    publishedServer.some((vv) => {
+      if (vv === v) {
+        published = true;
+        return true;
+      }
+      return false;
+    });
+    if (published) {
+      s.published = true;
+    }
+    return s;
+  });
+
+  ctx.body = searchAndPage({
+    data: arr,
+    currentPage,
+    pageSize,
+  });
+});
+
 router.post('/publishResult', async (ctx) => {
   const { id = '', address } = ctx.request.body;
 
@@ -293,49 +297,9 @@ router.post('/publishResult', async (ctx) => {
         where: { gitId: res.appId },
       }
     );
-
-    ctx.body = { id };
   }
-});
-
-router.post('/buildResult', async (ctx) => {
-  const { id = '', result } = ctx.request.body;
-
-  if (!id) {
-    ctx.status = 400;
-    ctx.body = { message: 'id必填' };
-    return;
-  }
-
-  const buildStatus =
-    result === 'success' ? buildStatusMap.done : buildStatusMap.fail;
-
-  await ctx.seq.models.publish.update(
-    {
-      buildStatus,
-    },
-    {
-      where: { id },
-    }
-  );
-
-  const res = await ctx.seq.models.publish.findOne({ where: { id } });
-
-  const { appId, appName, commit } = res;
-  await ctx.seq.models.app.update(
-    {
-      isBuilding: false,
-    },
-    {
-      where: { gitId: appId },
-    }
-  );
 
   ctx.body = { id };
-
-  // TODO: 解压操作改异步
-  const zip = new AdmZip(path.resolve(appDir, `${appName}-${commit}-dist.zip`));
-  zip.extractAllTo(path.resolve(appDir, `${appName}-${commit}-dist`), true);
 });
 
 // 发布
@@ -433,6 +397,80 @@ router.post('/publish', async (ctx) => {
     );
     ctx.body = { id };
   }
+});
+
+router.get('/buildLog', async (ctx) => {
+  const { id } = ctx.request.query;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const res = await ctx.seq.models.publish.findOne({
+    attributes: ['commit', 'appName'],
+    where: { id },
+  });
+
+  const { commit, appName } = res;
+
+  try {
+    const res2 = await axios({
+      url: `${buildServer}/build/output`,
+      method: 'get',
+      headers: { 'Content-Type': 'application/json' },
+      params: {
+        appName,
+        commit,
+      },
+    });
+
+    ctx.body = res2.data;
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
+  }
+});
+
+router.post('/buildResult', async (ctx) => {
+  const { id = '', result } = ctx.request.body;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const buildStatus =
+    result === 'success' ? buildStatusMap.done : buildStatusMap.fail;
+
+  await ctx.seq.models.publish.update(
+    {
+      buildStatus,
+    },
+    {
+      where: { id },
+    }
+  );
+
+  const res = await ctx.seq.models.publish.findOne({ where: { id } });
+
+  const { appId, appName, commit } = res;
+  await ctx.seq.models.app.update(
+    {
+      isBuilding: false,
+    },
+    {
+      where: { gitId: appId },
+    }
+  );
+
+  ctx.body = { id };
+
+  // TODO: 解压操作改异步
+  const zip = new AdmZip(path.resolve(appDir, `${appName}-${commit}-dist.zip`));
+  zip.extractAllTo(path.resolve(appDir, `${appName}-${commit}-dist`), true);
 });
 
 // 打包
