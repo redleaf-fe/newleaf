@@ -1,14 +1,16 @@
 const redisKey = require('../redisKey');
 
 module.exports = async (ctx, next) => {
-  const whiteList = [
+  const whitePathList = [
     '/login/login',
     '/login/register',
     '/publish/getShouldPublish',
     '/publish/buildResult',
     '/publish/publishResult',
   ];
-  if (ctx.method === 'OPTIONS' || whiteList.includes(ctx.path)) {
+  const whiteReqList = ['GET', 'POST', 'PUT', 'DELETE', 'UPDATE'];
+
+  if (!whiteReqList.includes(ctx.method) || whitePathList.includes(ctx.path)) {
     await next();
     return;
   }
