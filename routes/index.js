@@ -6,4 +6,5 @@ module.exports = (router) => {
   router.use('/user', require('./user'));
   router.use('/approve', require('./approve'));
   router.use('/sourceMap', require('./sourceMap'));
+  router.use('/dashboard', require('./dashboard'));
 };

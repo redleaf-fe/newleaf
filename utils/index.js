@@ -26,34 +26,23 @@ function getIPAddress() {
 const IPAddr = getIPAddress();
 
 module.exports = {
-  toPromise(promise) {
-    return promise
-      .then((data) => {
-        return [null, data];
-      })
-      .catch((err) => [err]);
-  },
   // redis promisify
   redisPromisify(client) {
-    client.ttlAsync = promisify(client.ttl).bind(client);
-    client.existsAsync = promisify(client.exists).bind(client);
-    // 
-    client.getAsync = promisify(client.get).bind(client);
-    client.setAsync = promisify(client.set).bind(client);
-    client.mgetAsync = promisify(client.mget).bind(client);
-    // list
-    client.lpushAsync = promisify(client.lpush).bind(client);
-    client.lrangeAsync = promisify(client.lrange).bind(client);
-    client.llenAsync = promisify(client.llen).bind(client);
-    // set
-    client.saddAsync = promisify(client.sadd).bind(client);
-    client.scardAsync = promisify(client.scard).bind(client);
-    client.smembersAsync = promisify(client.smembers).bind(client);
-    client.sismemberAsync = promisify(client.sismember).bind(client);
-    // hash
-    client.hsetAsync = promisify(client.hset).bind(client);
-    client.hgetAsync = promisify(client.hget).bind(client);
-    client.hgetallAsync = promisify(client.hgetall).bind(client);
+    [
+      // 
+      'ttl', 'exists', 'del', 'expire',
+      // string
+      'get', 'set', 'mget', 'getset',
+      // list
+      'lpush', 'lpop', 'lindex', 'lrange', 'llen', 'lrem', 'rpush', 'rpop',
+      // set
+      'sadd', 'scard', 'smembers', 'sismember', 'srem',
+      // hash
+      'hset', 'hget', 'hgetall', 'hdel', 'hexists', 'hkeys', 'hvals', 'hlen', 'hmget', 'hmset'
+    ]
+    .forEach(v=>{
+      client[`${v}Async`] = promisify(client[v]).bind(client);
+    });
   },
   // 参数校验
   validate({ ctx, schema, obj }) {
