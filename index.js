@@ -3,7 +3,6 @@ const Router = require('koa-router');
 const Logger = require('koa-logger');
 const BodyParser = require('koa-body');
 const Send = require('koa-send');
-// const Helmet = require('koa-helmet');
 const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
@@ -11,8 +10,9 @@ const redis = require('redis');
 
 const config = require('./env.json');
 const { Database, CodeRepo } = require('./services');
-const { LoginMiddleware } = require('./middlewares');
+const { LoginMiddleware, Request, Hardware } = require('./middlewares');
 const { redisPromisify } = require('./utils');
+const redisKey = require('./redisKey');
 
 async function main() {
   const seq = new Sequelize({
@@ -90,6 +90,7 @@ async function main() {
 
   // 登录和权限
   app.use(LoginMiddleware);
+  app.use(Request({ key: redisKey.monitorKey }));
 
   require('./routes')(router);
 
@@ -98,6 +99,8 @@ async function main() {
 
   const port = config.serverPort || 3000;
   app.listen(port);
+
+  Hardware(app.context, { key: redisKey.monitorKey });
 }
 
 main();
