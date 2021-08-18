@@ -8,9 +8,10 @@ module.exports = {
     return `newleaf_login_token_uid_${token}`;
   },
   publishServer(id){
-    return `publish_server_${id}`;
+    return `newleaf_publish_server_${id}`;
   },
   publishedServer(id){
-    return `published_server_${id}`;
-  }
+    return `newleaf_published_server_${id}`;
+  },
+  monitorKey: 'newleaf_monitor'
 };
