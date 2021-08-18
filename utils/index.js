@@ -52,6 +52,7 @@ module.exports = {
     client.sismemberAsync = promisify(client.sismember).bind(client);
     // hash
     client.hsetAsync = promisify(client.hset).bind(client);
+    client.hgetAsync = promisify(client.hget).bind(client);
     client.hgetallAsync = promisify(client.hgetall).bind(client);
   },
   // 参数校验
