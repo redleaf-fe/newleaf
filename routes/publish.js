@@ -404,7 +404,6 @@ router.get('/buildLog', async (ctx) => {
   const { id } = ctx.request.query;
 
   const res = await ctx.seq.models.publish.findOne({
-    attributes: ['commit', 'appName'],
     where: { id },
   });
 
@@ -418,6 +417,11 @@ router.get('/buildLog', async (ctx) => {
 
   const buildServerKey = redisKey.buildServer(appId, commit);
   const buildServerAddr = await ctx.redis.getAsync(buildServerKey);
+
+  if (!buildServerAddr) {
+    ctx.body = '';
+    return;
+  }
 
   try {
     const res2 = await axios({
@@ -469,6 +473,7 @@ router.post('/buildServer', async (ctx) => {
         scpPath: `${IPAddr}:${appDir}`,
         commit,
         appId,
+        id
       },
     });
 
@@ -593,6 +598,8 @@ router.post('/build', async (ctx) => {
       id,
     })
   );
+
+  ctx.body = { id };
 });
 
 module.exports = router.routes();
