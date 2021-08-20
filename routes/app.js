@@ -78,7 +78,7 @@ router.get('/list', async (ctx) => {
 });
 
 router.get('/detail', async (ctx) => {
-  const { id = '' } = ctx.request.query;
+  const { id } = ctx.request.query;
 
   if (!id) {
     ctx.status = 400;

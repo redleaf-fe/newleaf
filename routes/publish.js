@@ -15,12 +15,7 @@ const {
   approveStatusMap,
   buildStatusMap,
 } = require('../const');
-const {
-  appDir,
-  buildServer,
-  gitServer,
-  sessionValidTime,
-} = require('../env.json');
+const { appDir, gitServer, sessionValidTime } = require('../env.json');
 
 const router = new Router();
 
@@ -146,7 +141,7 @@ router.post('/save', async (ctx) => {
 });
 
 router.post('/getShouldPublish', async (ctx) => {
-  const { id = '', address } = ctx.request.body;
+  const { id, address } = ctx.request.body;
 
   if (!id) {
     ctx.status = 400;
@@ -217,7 +212,7 @@ router.post('/getShouldPublish', async (ctx) => {
 });
 
 router.get('/publishDetail', async (ctx) => {
-  const { id = '', currentPage = 1, pageSize = 10 } = ctx.request.query;
+  const { id, currentPage = 1, pageSize = 10 } = ctx.request.query;
 
   if (!id) {
     ctx.status = 400;
@@ -255,7 +250,7 @@ router.get('/publishDetail', async (ctx) => {
 });
 
 router.post('/publishResult', async (ctx) => {
-  const { id = '', address } = ctx.request.body;
+  const { id, address } = ctx.request.body;
 
   if (!id) {
     ctx.status = 400;
@@ -304,7 +299,13 @@ router.post('/publishResult', async (ctx) => {
 
 // 发布
 router.post('/publish', async (ctx) => {
-  const { id = '', env } = ctx.request.body;
+  const { id, env } = ctx.request.body;
+
+  if (!id) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
 
   const res = await ctx.seq.models.publish.findOne({
     where: {
@@ -402,22 +403,25 @@ router.post('/publish', async (ctx) => {
 router.get('/buildLog', async (ctx) => {
   const { id } = ctx.request.query;
 
+  const res = await ctx.seq.models.publish.findOne({
+    attributes: ['commit', 'appName'],
+    where: { id },
+  });
+
+  const { commit, appName, appId } = res;
+
   if (!id) {
     ctx.status = 400;
     ctx.body = { message: 'id必填' };
     return;
   }
 
-  const res = await ctx.seq.models.publish.findOne({
-    attributes: ['commit', 'appName'],
-    where: { id },
-  });
-
-  const { commit, appName } = res;
+  const buildServerKey = redisKey.buildServer(appId, commit);
+  const buildServerAddr = await ctx.redis.getAsync(buildServerKey);
 
   try {
     const res2 = await axios({
-      url: `${buildServer}/build/output`,
+      url: `${buildServerAddr}/output`,
       method: 'get',
       headers: { 'Content-Type': 'application/json' },
       params: {
@@ -433,8 +437,80 @@ router.get('/buildLog', async (ctx) => {
   }
 });
 
+router.post('/buildServer', async (ctx) => {
+  // 确认打包的服务器地址
+  const { appId, commit, addr, id, appName } = ctx.request.body;
+
+  if (!appId) {
+    ctx.status = 400;
+    ctx.body = { message: 'id必填' };
+    return;
+  }
+
+  const buildServerKey = redisKey.buildServer(appId, commit);
+  await ctx.redis.setAsync(buildServerKey, addr);
+  ctx.redis.expire(buildServerKey, sessionValidTime * 3);
+
+  const appDetail = await ctx.codeRepo.getProjectDetail({ id: appId });
+  if (!appDetail.data) {
+    ctx.status = 400;
+    ctx.body = { message: '获取项目详情失败' };
+    return;
+  }
+
+  try {
+    const res = await axios({
+      url: `${addr}/build`,
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      data: {
+        appName,
+        gitPath: `http://user1:11111111@${gitServer}/${appDetail.data.path_with_namespace}`,
+        scpPath: `${IPAddr}:${appDir}`,
+        commit,
+        appId,
+      },
+    });
+
+    if (res.data.cached) {
+      await ctx.seq.models.publish.update(
+        {
+          buildStatus: buildStatusMap.done,
+        },
+        {
+          where: { id },
+        }
+      );
+    } else if (res.data.id === id) {
+      await ctx.seq.models.app.update(
+        {
+          isBuilding: true,
+        },
+        {
+          where: { gitId: appId },
+        }
+      );
+
+      await ctx.seq.models.publish.update(
+        {
+          buildStatus: buildStatusMap.doing,
+        },
+        {
+          where: { id },
+        }
+      );
+    }
+    ctx.body = { id };
+  } catch (e) {
+    ctx.status = 500;
+    ctx.body = { message: e.response.data.message };
+  }
+
+  ctx.body = { appId };
+});
+
 router.post('/buildResult', async (ctx) => {
-  const { id = '', result } = ctx.request.body;
+  const { id, result } = ctx.request.body;
 
   if (!id) {
     ctx.status = 400;
@@ -475,7 +551,7 @@ router.post('/buildResult', async (ctx) => {
 
 // 打包
 router.post('/build', async (ctx) => {
-  const { id = '' } = ctx.request.body;
+  const { id } = ctx.request.body;
 
   const res = await ctx.seq.models.publish.findOne({
     where: {
@@ -483,7 +559,7 @@ router.post('/build', async (ctx) => {
     },
   });
 
-  const { appName, branch, commit, appId } = res;
+  const { appName, commit, appId } = res;
   if (fs.existsSync(path.resolve(appDir, `${appName}-${commit}-dist`))) {
     // 打包结果已存在
     await ctx.seq.models.publish.update(
@@ -508,61 +584,15 @@ router.post('/build', async (ctx) => {
     return;
   }
 
-  const appDetail = await ctx.codeRepo.getProjectDetail({ id: appId });
-  if (!appDetail.data) {
-    ctx.status = 400;
-    ctx.body = { message: '获取项目详情失败' };
-    return;
-  }
-
-  try {
-    const res2 = await axios({
-      url: `${buildServer}/build/build`,
-      method: 'post',
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        appName,
-        gitPath: `http://user1:11111111@${gitServer}/${appDetail.data.path_with_namespace}`,
-        scpPath: `${IPAddr}:${appDir}`,
-        branch,
-        commit,
-        id,
-      },
-    });
-
-    if (res2.data.cached) {
-      await ctx.seq.models.publish.update(
-        {
-          buildStatus: buildStatusMap.done,
-        },
-        {
-          where: { id },
-        }
-      );
-    } else if (res2.data.id === id) {
-      await ctx.seq.models.app.update(
-        {
-          isBuilding: true,
-        },
-        {
-          where: { gitId: appId },
-        }
-      );
-
-      await ctx.seq.models.publish.update(
-        {
-          buildStatus: buildStatusMap.doing,
-        },
-        {
-          where: { id },
-        }
-      );
-    }
-    ctx.body = { id };
-  } catch (e) {
-    ctx.status = 500;
-    ctx.body = { message: e.response.data.message };
-  }
+  ctx.redis.publish(
+    redisKey.buildChannel,
+    JSON.stringify({
+      appId,
+      commit,
+      appName,
+      id,
+    })
+  );
 });
 
 module.exports = router.routes();

@@ -1,4 +1,5 @@
 module.exports = {
+  buildChannel: "_newleaf_build_channel_",
   deployChannel: "_newleaf_deploy_channel_",
   loginInfo(uid) {
     return `newleaf_login_info_${uid}`;
@@ -12,6 +13,9 @@ module.exports = {
   },
   publishedServer(id){
     return `newleaf_published_server_${id}`;
+  },
+  buildServer(id, commit){
+    return `newleaf_build_server_${id}_${commit}`;
   },
   monitorKey: 'newleaf_monitor'
 };
