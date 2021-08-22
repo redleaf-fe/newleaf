@@ -5,8 +5,9 @@ module.exports = async (ctx, next) => {
     '/login/login',
     '/login/register',
     '/publish/getShouldPublish',
-    '/publish/buildResult',
     '/publish/publishResult',
+    '/publish/buildServer',
+    '/publish/buildResult',
   ];
   const whiteReqList = ['GET', 'POST', 'PUT', 'DELETE', 'UPDATE'];
 

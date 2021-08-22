@@ -7,10 +7,11 @@ const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
 const redis = require('redis');
+const { request: Request, hardware: Hardware } = require('newleaf-monitor');
 
 const config = require('./env.json');
 const { Database, CodeRepo } = require('./services');
-const { LoginMiddleware, Request, Hardware } = require('./middlewares');
+const { LoginMiddleware } = require('./middlewares');
 const { redisPromisify } = require('./utils');
 const redisKey = require('./redisKey');
 
