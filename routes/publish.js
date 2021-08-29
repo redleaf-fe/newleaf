@@ -469,11 +469,11 @@ router.post('/buildServer', async (ctx) => {
       headers: { 'Content-Type': 'application/json' },
       data: {
         appName,
-        gitPath: `http://user1:11111111@${gitServer}/${appDetail.data.path_with_namespace}`,
+        gitPath: `http://${gitServer}/${appDetail.data.path_with_namespace}`,
         scpPath: `${IPAddr}:${appDir}`,
         commit,
         appId,
-        id
+        id,
       },
     });
 
