@@ -3,7 +3,6 @@ const Router = require('koa-router');
 const Logger = require('koa-logger');
 const BodyParser = require('koa-body');
 const Send = require('koa-send');
-const nunjucks = require('nunjucks');
 const { Sequelize } = require('sequelize');
 const KeyGrip = require('keygrip');
 const redis = require('redis');
@@ -23,6 +22,7 @@ async function main() {
     password: config.databasePassword,
     port: config.databasePort,
     database: config.databaseName,
+    logging: config.dev,
     define: {
       freezeTableName: true,
     },
@@ -60,9 +60,9 @@ async function main() {
   // app.use(Helmet());
   // 跨域配置
   app.use(async (ctx, next) => {
-    ctx.set('Access-Control-Allow-Origin', 'http://localhost:3020');
-    ctx.set('Access-Control-Allow-Headers', 'content-type');
-    ctx.set('Access-Control-Allow-Credentials', 'true');
+    // ctx.set('Access-Control-Allow-Origin', '*');
+    // ctx.set('Access-Control-Allow-Headers', 'content-type');
+    // ctx.set('Access-Control-Allow-Credentials', 'true');
     await next();
   });
 
@@ -80,10 +80,9 @@ async function main() {
     }
   });
 
-  nunjucks.configure('views');
   app.use(async (ctx, next) => {
     if (ctx.path.startsWith('/page/')) {
-      ctx.body = nunjucks.render('index.html');
+      await Send(ctx, 'index.html', { root: __dirname + '/views' });
     } else {
       await next();
     }
