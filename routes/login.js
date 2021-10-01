@@ -82,6 +82,9 @@ async function setCookie({ ctx, uid, gitUid, username }) {
 
     ctx.cookies.set('token', token, cookieConfig);
     ctx.cookies.set('username', username, { httpOnly: false });
+  } else {
+    ctx.cookies.set('token', res.loginToken, cookieConfig);
+    ctx.cookies.set('username', username, { httpOnly: false });
   }
 
   async function getToken() {
