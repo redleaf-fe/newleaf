@@ -8,10 +8,14 @@ package-lock.json
 # production
 /dist
 /build
+/docs
+/docs-dist
 
 # misc
 .DS_Store
 .vscode
+.dumi
+.umi
 deprecated
 *.log
 *.bak
